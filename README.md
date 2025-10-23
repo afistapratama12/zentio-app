@@ -1,102 +1,201 @@
-Welcome to your new TanStack app! 
+# 💰 Zentio - AI Agent Web Budgeting AppWelcome to your new TanStack app! 
 
-# Getting Started
 
-To run this application:
 
-```bash
+> Bangun Financial Plan Cerdas Berbasis AI — Dari Transaksi Harian Hingga Budget Masa Depan# Getting Started
+
+
+
+## 🚀 Quick StartTo run this application:
+
+
+
+### Prerequisites```bash
+
 npm install
-npm run start
-```
 
-# Building For Production
+- Node.js 22.12+ or 20.19+npm run start
 
-To build this application for production:
+- npm atau pnpm```
 
-```bash
-npm run build
+- Supabase Account  
+
+- OpenAI API Key# Building For Production
+
+
+
+### InstallationTo build this application for production:
+
+
+
+1. **Install Dependencies**```bash
+
+```bashnpm run build
+
+npm install```
+
 ```
 
 ## Testing
 
+2. **Setup Environment Variables**
+
 This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
 
-```bash
-npm run test
-```
+Copy `.env.example` ke `.env` dan isi:
+
+```env```bash
+
+# Supabase Configurationnpm run test
+
+VITE_SUPABASE_URL=your_supabase_project_url```
+
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 ## Styling
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
+# OpenAI Configuration
+
+VITE_OPENAI_API_KEY=your_openai_api_keyThis project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
 
 
 
+# App Configuration
+
+VITE_APP_URL=http://localhost:3000
+
+```
 
 ## Routing
-This project uses [TanStack Router](https://tanstack.com/router). The initial setup is a file based router. Which means that the routes are managed as files in `src/routes`.
 
-### Adding A Route
+3. **Setup Supabase Database**This project uses [TanStack Router](https://tanstack.com/router). The initial setup is a file based router. Which means that the routes are managed as files in `src/routes`.
 
-To add a new route to your application just add another a new file in the `./src/routes` directory.
 
-TanStack will automatically generate the content of the route file for you.
+
+Jalankan SQL di `supabase/schema.sql` pada Supabase Dashboard > SQL Editor### Adding A Route
+
+
+
+4. **Run Development Server**To add a new route to your application just add another a new file in the `./src/routes` directory.
+
+```bash
+
+npm run devTanStack will automatically generate the content of the route file for you.
+
+```
 
 Now that you have two routes you can use a `Link` component to navigate between them.
 
+Aplikasi akan berjalan di `http://localhost:3000/`
+
 ### Adding Links
+
+---
 
 To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
 
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
+## 🎯 Features
 
 ```tsx
-<Link to="/about">About</Link>
+
+- ✅ AI-powered transaction analysis (OpenAI Vision)import { Link } from "@tanstack/react-router";
+
+- ✅ Conversational budgeting assistant```
+
+- ✅ Interactive budget visualization
+
+- ✅ PDF & CSV exportThen anywhere in your JSX you can use it like so:
+
+- ✅ Budget history & comparison
+
+- ✅ Personalized recommendations```tsx
+
+- ✅ Simple gamification rewards<Link to="/about">About</Link>
+
 ```
+
+---
 
 This will create a link that will navigate to the `/about` route.
 
+## 🛠️ Tech Stack
+
 More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
 
-### Using A Layout
+- **Framework:** TanStack Start V1.0
 
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you use the `<Outlet />` component.
+- **Language:** TypeScript### Using A Layout
 
-Here is an example layout that includes a header:
+- **Styling:** TailwindCSS V4
 
-```tsx
-import { Outlet, createRootRoute } from '@tanstack/react-router'
+- **UI:** shadcn/uiIn the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you use the `<Outlet />` component.
+
+- **Database:** Supabase
+
+- **Auth:** Supabase AuthHere is an example layout that includes a header:
+
+- **AI:** OpenAI GPT-4o + Vision
+
+- **Charts:** Recharts```tsx
+
+- **Export:** pdf-lib, papaparseimport { Outlet, createRootRoute } from '@tanstack/react-router'
+
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
+
+---
 
 import { Link } from "@tanstack/react-router";
 
+## 📝 Development Status
+
 export const Route = createRootRoute({
-  component: () => (
-    <>
-      <header>
-        <nav>
-          <Link to="/">Home</Link>
+
+### ✅ Completed  component: () => (
+
+- [x] Project setup & dependencies    <>
+
+- [x] Database schema      <header>
+
+- [x] shadcn/ui setup        <nav>
+
+- [x] Basic homepage          <Link to="/">Home</Link>
+
           <Link to="/about">About</Link>
-        </nav>
-      </header>
-      <Outlet />
-      <TanStackRouterDevtools />
-    </>
-  ),
-})
+
+### 🚧 Next Steps        </nav>
+
+- [ ] Authentication flow      </header>
+
+- [ ] Onboarding with AI      <Outlet />
+
+- [ ] Transaction uploader & analyzer      <TanStackRouterDevtools />
+
+- [ ] Budget generation & chat    </>
+
+- [ ] Export features  ),
+
+- [ ] Rewards system})
+
 ```
+
+---
 
 The `<TanStackRouterDevtools />` component is not required so you can remove it if you don't want it in your layout.
 
+## 📄 License
+
 More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
 
+Private/Proprietary
 
-## Data Fetching
 
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
+
+---## Data Fetching
+
+
+
+Built with ❤️ using TanStack Start, Supabase & OpenAIThere are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
+
 
 For example:
 

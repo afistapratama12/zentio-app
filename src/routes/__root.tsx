@@ -1,6 +1,7 @@
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
+import { Toaster } from '~/components/ui/sonner'
 
 import Header from '../components/Header'
 
@@ -17,7 +18,11 @@ export const Route = createRootRoute({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'TanStack Start Starter',
+        title: 'Zentio - AI Budget Planning',
+      },
+      {
+        name: 'description',
+        content: 'Bangun Financial Plan Cerdas Berbasis AI — Dari Transaksi Harian Hingga Budget Masa Depan',
       },
     ],
     links: [
@@ -40,6 +45,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body>
         <Header />
         {children}
+        <Toaster />
         <TanStackDevtools
           config={{
             position: 'bottom-right',

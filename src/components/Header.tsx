@@ -10,6 +10,10 @@ import {
   SquareFunction,
   StickyNote,
   X,
+  History,
+  LayoutDashboard,
+  User,
+  Trophy,
 } from 'lucide-react'
 
 export default function Header() {
@@ -69,7 +73,71 @@ export default function Header() {
             <span className="font-medium">Home</span>
           </Link>
 
+          {/* App Links Start */}
+          <div className="mb-4 mt-6">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">
+              Zentio App
+            </h3>
+            
+            <Link
+              to="/app"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
+              activeProps={{
+                className:
+                  'flex items-center gap-3 p-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 transition-colors mb-2',
+              }}
+            >
+              <LayoutDashboard size={20} />
+              <span className="font-medium">Dashboard</span>
+            </Link>
+
+            <Link
+              to="/app/history"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
+              activeProps={{
+                className:
+                  'flex items-center gap-3 p-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 transition-colors mb-2',
+              }}
+            >
+              <History size={20} />
+              <span className="font-medium">Budget History</span>
+            </Link>
+
+            <Link
+              to="/app/profile"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
+              activeProps={{
+                className:
+                  'flex items-center gap-3 p-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 transition-colors mb-2',
+              }}
+            >
+              <User size={20} />
+              <span className="font-medium">Profile</span>
+            </Link>
+
+            <Link
+              to="/app/rewards"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
+              activeProps={{
+                className:
+                  'flex items-center gap-3 p-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 transition-colors mb-2',
+              }}
+            >
+              <Trophy size={20} />
+              <span className="font-medium">Rewards</span>
+            </Link>
+          </div>
+          {/* App Links End */}
+
           {/* Demo Links Start */}
+          <div className="border-t border-gray-700 pt-4">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">
+              Demo Examples
+            </h3>
 
           <Link
             to="/demo/start/server-funcs"
@@ -168,7 +236,7 @@ export default function Header() {
               </Link>
             </div>
           )}
-
+          </div>
           {/* Demo Links End */}
         </nav>
       </aside>
