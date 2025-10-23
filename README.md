@@ -1,389 +1,350 @@
-# 💰 Zentio - AI Agent Web Budgeting AppWelcome to your new TanStack app! 
+# 💰 Zentio - AI Agent Web Budgeting App
 
+> Bangun Financial Plan Cerdas Berbasis AI — Dari Transaksi Harian Hingga Budget Masa Depan
 
+## 🚀 Quick Start
 
-> Bangun Financial Plan Cerdas Berbasis AI — Dari Transaksi Harian Hingga Budget Masa Depan# Getting Started
+### Prerequisites
 
+- **Node.js** 20.x or later
+- **Bun** (recommended) or npm
+- **Supabase Account** - [Create one here](https://supabase.com)
+- **OpenAI API Key** - [Get yours here](https://platform.openai.com/api-keys)
 
+### Installation
 
-## 🚀 Quick StartTo run this application:
+1. **Clone & Install Dependencies**
 
-
-
-### Prerequisites```bash
-
-npm install
-
-- Node.js 22.12+ or 20.19+npm run start
-
-- npm atau pnpm```
-
-- Supabase Account  
-
-- OpenAI API Key# Building For Production
-
-
-
-### InstallationTo build this application for production:
-
-
-
-1. **Install Dependencies**```bash
-
-```bashnpm run build
-
-npm install```
-
+```bash
+git clone <your-repo-url>
+cd zentio-ai-next
+bun install
 ```
-
-## Testing
 
 2. **Setup Environment Variables**
 
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
-
-Copy `.env.example` ke `.env` dan isi:
-
-```env```bash
-
-# Supabase Configurationnpm run test
-
-VITE_SUPABASE_URL=your_supabase_project_url```
-
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-
-## Styling
-
-# OpenAI Configuration
-
-VITE_OPENAI_API_KEY=your_openai_api_keyThis project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
-
-
-
-# App Configuration
-
-VITE_APP_URL=http://localhost:3000
-
-```
-
-## Routing
-
-3. **Setup Supabase Database**This project uses [TanStack Router](https://tanstack.com/router). The initial setup is a file based router. Which means that the routes are managed as files in `src/routes`.
-
-
-
-Jalankan SQL di `supabase/schema.sql` pada Supabase Dashboard > SQL Editor### Adding A Route
-
-
-
-4. **Run Development Server**To add a new route to your application just add another a new file in the `./src/routes` directory.
+Create a `.env.local` file in the root directory:
 
 ```bash
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
-npm run devTanStack will automatically generate the content of the route file for you.
-
+# OpenAI Configuration
+OPENAI_API_KEY=your_openai_api_key
 ```
 
-Now that you have two routes you can use a `Link` component to navigate between them.
+3. **Setup Supabase Database**
 
-Aplikasi akan berjalan di `http://localhost:3000/`
+- Go to your Supabase Dashboard > SQL Editor
+- Run the SQL script from `supabase/schema.sql`
+- Run migrations from `supabase/migrations/`
 
-### Adding Links
+4. **Run Development Server**
+
+```bash
+bun run dev
+```
+
+The app will be available at `http://localhost:3000/`
+
+### Building for Production
+
+```bash
+bun run build
+bun run start
+```
 
 ---
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
 
 ## 🎯 Features
 
-```tsx
-
-- ✅ AI-powered transaction analysis (OpenAI Vision)import { Link } from "@tanstack/react-router";
-
-- ✅ Conversational budgeting assistant```
-
-- ✅ Interactive budget visualization
-
-- ✅ PDF & CSV exportThen anywhere in your JSX you can use it like so:
-
-- ✅ Budget history & comparison
-
-- ✅ Personalized recommendations```tsx
-
-- ✅ Simple gamification rewards<Link to="/about">About</Link>
-
-```
+- ✅ **AI-Powered Analysis** - OpenAI GPT-4o + Vision for transaction analysis
+- ✅ **Conversational Budgeting** - Chat-based budget creation and refinement
+- ✅ **Interactive Visualizations** - Real-time budget charts and comparisons
+- ✅ **Multi-Format Export** - Export to PDF & CSV
+- ✅ **Budget History** - Track and compare budgets over time
+- ✅ **Smart Recommendations** - AI-driven financial insights
+- ✅ **Gamification** - Reward system to encourage financial discipline
+- ✅ **Multi-language** - Support for multiple languages (i18n ready)
 
 ---
-
-This will create a link that will navigate to the `/about` route.
 
 ## 🛠️ Tech Stack
 
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
+### Core Framework
+- **[Next.js 15.5](https://nextjs.org/)** - React framework with App Router
+- **[React 19](https://react.dev/)** - UI library
+- **[TypeScript](https://www.typescriptlang.org/)** - Type-safe JavaScript
+- **[Turbopack](https://turbo.build/pack)** - Next-gen bundler (dev & build)
 
-- **Framework:** TanStack Start V1.0
+### Styling & UI
+- **[Tailwind CSS 4](https://tailwindcss.com/)** - Utility-first CSS framework
+- **[shadcn/ui](https://ui.shadcn.com/)** - Re-usable component library
+- **[Radix UI](https://www.radix-ui.com/)** - Unstyled accessible components
+- **[Lucide Icons](https://lucide.dev/)** - Beautiful icon set
+- **[Recharts](https://recharts.org/)** - Chart library for data visualization
 
-- **Language:** TypeScript### Using A Layout
+### Backend & Database
+- **[Supabase](https://supabase.com/)** - PostgreSQL database & authentication
+- **[@supabase/supabase-js](https://supabase.com/docs/reference/javascript)** - Supabase client
 
-- **Styling:** TailwindCSS V4
+### AI & Data Processing
+- **[OpenAI API](https://platform.openai.com/)** - GPT-4o for AI analysis
+- **[pdf-lib](https://pdf-lib.js.org/)** - PDF generation
+- **[jsPDF](https://github.com/parallax/jsPDF)** - PDF creation
+- **[PapaParse](https://www.papaparse.com/)** - CSV parsing and generation
 
-- **UI:** shadcn/uiIn the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you use the `<Outlet />` component.
+### State Management & Data Fetching
+- **[TanStack Query](https://tanstack.com/query)** - Powerful async state management
+- **[React Context API](https://react.dev/reference/react/useContext)** - Auth & language state
 
-- **Database:** Supabase
-
-- **Auth:** Supabase AuthHere is an example layout that includes a header:
-
-- **AI:** OpenAI GPT-4o + Vision
-
-- **Charts:** Recharts```tsx
-
-- **Export:** pdf-lib, papaparseimport { Outlet, createRootRoute } from '@tanstack/react-router'
-
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
+### Developer Experience
+- **[ESLint](https://eslint.org/)** - Code linting
+- **[Sonner](https://sonner.emilkowal.ski/)** - Toast notifications
+- **[clsx](https://github.com/lukeed/clsx)** & **[tailwind-merge](https://github.com/dcastil/tailwind-merge)** - Conditional styling
 
 ---
-
-import { Link } from "@tanstack/react-router";
 
 ## 📝 Development Status
 
-export const Route = createRootRoute({
+### ✅ Completed
+- [x] Project setup with Next.js 15 + Turbopack
+- [x] Database schema & migrations
+- [x] shadcn/ui integration
+- [x] Authentication system (Supabase Auth)
+- [x] Homepage & landing page
+- [x] Dashboard layout
+- [x] Budget creation workspace
+- [x] Transaction uploader
+- [x] AI-powered budget generation
+- [x] Chat-based budget refinement
+- [x] Budget visualization (charts & tables)
+- [x] Budget history tracking
+- [x] Profile management
+- [x] Rewards system
+- [x] Multi-language support
 
-### ✅ Completed  component: () => (
+### 🚧 In Progress
+- [ ] Advanced budget recommendations
+- [ ] Export optimization (PDF/CSV)
+- [ ] Mobile responsive improvements
+- [ ] Onboarding flow enhancement
+- [ ] Performance optimizations
 
-- [x] Project setup & dependencies    <>
+### 📋 Planned Features
+- [ ] Budget templates
+- [ ] Collaborative budgets (family/team)
+- [ ] Financial goal tracking
+- [ ] Investment recommendations
+- [ ] Mobile app (React Native)
+- [ ] Budget alerts & notifications
 
-- [x] Database schema      <header>
+---
 
-- [x] shadcn/ui setup        <nav>
+## 📂 Project Structure
 
-- [x] Basic homepage          <Link to="/">Home</Link>
-
-          <Link to="/about">About</Link>
-
-### 🚧 Next Steps        </nav>
-
-- [ ] Authentication flow      </header>
-
-- [ ] Onboarding with AI      <Outlet />
-
-- [ ] Transaction uploader & analyzer      <TanStackRouterDevtools />
-
-- [ ] Budget generation & chat    </>
-
-- [ ] Export features  ),
-
-- [ ] Rewards system})
-
+```
+zentio-ai-next/
+├── public/              # Static assets (logos, icons)
+├── src/
+│   ├── app/            # Next.js App Router pages
+│   │   ├── api/        # API routes
+│   │   ├── app/        # Main app pages (dashboard, budgets, etc)
+│   │   ├── auth/       # Auth pages
+│   │   └── login/      # Login page
+│   ├── components/     # React components
+│   │   ├── budget/     # Budget-specific components
+│   │   └── ui/         # shadcn/ui components
+│   ├── contexts/       # React contexts (Auth, Language)
+│   ├── hooks/          # Custom React hooks
+│   ├── lib/            # Utility functions & services
+│   └── types/          # TypeScript type definitions
+├── supabase/
+│   ├── migrations/     # Database migrations
+│   └── schema.sql      # Database schema
+└── ...config files
 ```
 
 ---
 
-The `<TanStackRouterDevtools />` component is not required so you can remove it if you don't want it in your layout.
+## 🔧 Key Configuration Files
+
+- **`next.config.ts`** - Next.js configuration
+- **`tailwind.config.ts`** - Tailwind CSS configuration
+- **`tsconfig.json`** - TypeScript configuration
+- **`components.json`** - shadcn/ui configuration
+- **`.env.local`** - Environment variables (create this)
+
+---
+
+## 🎨 Component Architecture
+
+### Pages
+- **`/`** - Landing page with features showcase
+- **`/login`** - Authentication page
+- **`/onboarding`** - User profile setup
+- **`/app`** - Main dashboard
+- **`/app/create-budget`** - Budget creation workspace
+- **`/app/history`** - Budget history & comparison
+- **`/app/profile`** - User profile management
+- **`/app/rewards`** - Rewards & achievements
+
+### Key Components
+- **`CreateBudgetWorkspace`** - Main budget creation interface
+- **`BudgetInputForm`** - Transaction upload & initial input
+- **`ChatSection`** - AI chat for budget refinement
+- **`BudgetTableSection`** - Budget display & editing
+- **`TransactionUploader`** - File upload (CSV/images)
+- **`BudgetChart`** - Data visualization
+
+---
+
+## 🔐 Authentication
+
+This app uses Supabase Auth with email/password authentication:
+
+```typescript
+// Sign up
+const { data, error } = await supabase.auth.signUp({
+  email: 'user@example.com',
+  password: 'password123'
+})
+
+// Sign in
+const { data, error } = await supabase.auth.signInWithPassword({
+  email: 'user@example.com',
+  password: 'password123'
+})
+
+// Sign out
+await supabase.auth.signOut()
+```
+
+---
+
+## 📊 Database Schema
+
+### Tables
+- **`user_profile`** - User demographic & financial info
+- **`transactions`** - Uploaded transaction data
+- **`budget_history`** - AI-generated budgets
+- **`budget_sessions`** - Active budget creation sessions
+- **`rewards`** - User achievements & badges
+
+See `supabase/schema.sql` for full schema definition.
+
+---
+
+## 🤖 AI Integration
+
+### OpenAI GPT-4o
+Used for:
+- Transaction analysis from images (Vision)
+- Budget generation based on spending patterns
+- Conversational budget refinement
+- Financial recommendations
+
+Example API call:
+```typescript
+const response = await openai.chat.completions.create({
+  model: "gpt-4o",
+  messages: [
+    { role: "system", content: "You are a financial advisor..." },
+    { role: "user", content: userMessage }
+  ]
+})
+```
+
+---
+
+## 🌍 Internationalization
+
+The app supports multiple languages using React Context:
+
+```typescript
+// In any component
+const { language, setLanguage, t } = useLanguage()
+
+// Use translations
+<h1>{t('welcome')}</h1>
+
+// Change language
+setLanguage('id') // Indonesian
+setLanguage('en') // English
+```
+
+---
+
+## 📱 Responsive Design
+
+Built mobile-first with Tailwind CSS breakpoints:
+- **sm** (640px) - Small tablets
+- **md** (768px) - Tablets
+- **lg** (1024px) - Desktops
+- **xl** (1280px) - Large desktops
+
+---
+
+## 🧪 Scripts
+
+```bash
+# Development
+bun run dev          # Start dev server with Turbopack
+
+# Production
+bun run build        # Build for production
+bun run start        # Start production server
+
+# Code Quality
+bun run lint         # Run ESLint
+```
+
+---
+
+## 🚀 Deployment
+
+### Vercel (Recommended)
+1. Push your code to GitHub
+2. Import project to Vercel
+3. Add environment variables
+4. Deploy!
+
+### Environment Variables
+Make sure to set these in your deployment platform:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `OPENAI_API_KEY`
+
+---
+
+## 🤝 Contributing
+
+This is a private/proprietary project. For contribution guidelines, please contact the project maintainer.
+
+---
 
 ## 📄 License
 
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
 Private/Proprietary
 
+---
 
+## 🙏 Acknowledgments
 
----## Data Fetching
+Built with ❤️ using:
+- [Next.js](https://nextjs.org/)
+- [Supabase](https://supabase.com/)
+- [OpenAI](https://openai.com/)
+- [shadcn/ui](https://ui.shadcn.com/)
+- [TanStack Query](https://tanstack.com/query)
 
+---
 
+## 📞 Support
 
-Built with ❤️ using TanStack Start, Supabase & OpenAIThere are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
+For issues or questions, please contact the development team or create an issue in the repository.
 
+---
 
-For example:
-
-```tsx
-const peopleRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/people",
-  loader: async () => {
-    const response = await fetch("https://swapi.dev/api/people");
-    return response.json() as Promise<{
-      results: {
-        name: string;
-      }[];
-    }>;
-  },
-  component: () => {
-    const data = peopleRoute.useLoaderData();
-    return (
-      <ul>
-        {data.results.map((person) => (
-          <li key={person.name}>{person.name}</li>
-        ))}
-      </ul>
-    );
-  },
-});
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-### React-Query
-
-React-Query is an excellent addition or alternative to route loading and integrating it into you application is a breeze.
-
-First add your dependencies:
-
-```bash
-npm install @tanstack/react-query @tanstack/react-query-devtools
-```
-
-Next we'll need to create a query client and provider. We recommend putting those in `main.tsx`.
-
-```tsx
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-
-// ...
-
-const queryClient = new QueryClient();
-
-// ...
-
-if (!rootElement.innerHTML) {
-  const root = ReactDOM.createRoot(rootElement);
-
-  root.render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
-  );
-}
-```
-
-You can also add TanStack Query Devtools to the root route (optional).
-
-```tsx
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-
-const rootRoute = createRootRoute({
-  component: () => (
-    <>
-      <Outlet />
-      <ReactQueryDevtools buttonPosition="top-right" />
-      <TanStackRouterDevtools />
-    </>
-  ),
-});
-```
-
-Now you can use `useQuery` to fetch your data.
-
-```tsx
-import { useQuery } from "@tanstack/react-query";
-
-import "./App.css";
-
-function App() {
-  const { data } = useQuery({
-    queryKey: ["people"],
-    queryFn: () =>
-      fetch("https://swapi.dev/api/people")
-        .then((res) => res.json())
-        .then((data) => data.results as { name: string }[]),
-    initialData: [],
-  });
-
-  return (
-    <div>
-      <ul>
-        {data.map((person) => (
-          <li key={person.name}>{person.name}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-export default App;
-```
-
-You can find out everything you need to know on how to use React-Query in the [React-Query documentation](https://tanstack.com/query/latest/docs/framework/react/overview).
-
-## State Management
-
-Another common requirement for React applications is state management. There are many options for state management in React. TanStack Store provides a great starting point for your project.
-
-First you need to add TanStack Store as a dependency:
-
-```bash
-npm install @tanstack/store
-```
-
-Now let's create a simple counter in the `src/App.tsx` file as a demonstration.
-
-```tsx
-import { useStore } from "@tanstack/react-store";
-import { Store } from "@tanstack/store";
-import "./App.css";
-
-const countStore = new Store(0);
-
-function App() {
-  const count = useStore(countStore);
-  return (
-    <div>
-      <button onClick={() => countStore.setState((n) => n + 1)}>
-        Increment - {count}
-      </button>
-    </div>
-  );
-}
-
-export default App;
-```
-
-One of the many nice features of TanStack Store is the ability to derive state from other state. That derived state will update when the base state updates.
-
-Let's check this out by doubling the count using derived state.
-
-```tsx
-import { useStore } from "@tanstack/react-store";
-import { Store, Derived } from "@tanstack/store";
-import "./App.css";
-
-const countStore = new Store(0);
-
-const doubledStore = new Derived({
-  fn: () => countStore.state * 2,
-  deps: [countStore],
-});
-doubledStore.mount();
-
-function App() {
-  const count = useStore(countStore);
-  const doubledCount = useStore(doubledStore);
-
-  return (
-    <div>
-      <button onClick={() => countStore.setState((n) => n + 1)}>
-        Increment - {count}
-      </button>
-      <div>Doubled - {doubledCount}</div>
-    </div>
-  );
-}
-
-export default App;
-```
-
-We use the `Derived` class to create a new store that is derived from another store. The `Derived` class has a `mount` method that will start the derived store updating.
-
-Once we've created the derived store we can use it in the `App` component just like we would any other store using the `useStore` hook.
-
-You can find out everything you need to know on how to use TanStack Store in the [TanStack Store documentation](https://tanstack.com/store/latest).
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
+**Last Updated:** October 2025
