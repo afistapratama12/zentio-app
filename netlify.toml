@@ -1,6 +1,18 @@
 [build]
-  command = "vite build"
-  publish = "dist/client"
+  command = "npm run build"
+  publish = ".netlify/deploy"
+  functions = ".netlify/functions-internal"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/server"
+  status = 200
+
 [dev]
-  command = "vite dev"
+  command = "npm run dev"
   port = 3000
+  targetPort = 3000
+  framework = "#custom"
