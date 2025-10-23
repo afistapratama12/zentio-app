@@ -6,14 +6,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '~/components/ui/table'
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
-import { Input } from '~/components/ui/input'
-import { Button } from '~/components/ui/button'
-import { Badge } from '~/components/ui/badge'
+} from './ui/table'
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
+import { Input } from './ui/input'
+import { Button } from './ui/button'
+import { Badge } from './ui/badge'
 import { Save, Edit2, X, Check, DollarSign } from 'lucide-react'
 import { toast } from 'sonner'
-import type { Budget } from '~/types'
+import type { Budget } from '../types'
 
 interface BudgetTableProps {
   budget: Budget[]

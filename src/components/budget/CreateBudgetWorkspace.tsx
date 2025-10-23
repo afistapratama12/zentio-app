@@ -1,12 +1,14 @@
+'use client'
+
 import { useState, useEffect } from 'react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
-import { BudgetInputForm } from '~/components/budget/BudgetInputForm'
-import { ChatSection } from '~/components/budget/ChatSection'
-import { BudgetTableSection } from '~/components/budget/BudgetTableSection'
-import { type ChatMessage, type BudgetItem } from '~/lib/ai-service'
-import { type UploadedFile, uploadMultipleFiles } from '~/lib/file-upload'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
+import { BudgetInputForm } from '../budget/BudgetInputForm'
+import { ChatSection } from '../budget/ChatSection'
+import { BudgetTableSection } from '../budget/BudgetTableSection'
+import { type ChatMessage, type BudgetItem } from '../../lib/ai-service'
+import { type UploadedFile, uploadMultipleFiles } from '../../lib/file-upload'
 import { toast } from 'sonner'
-import { useBudgetSession, useUpdateBudgetSession } from '~/hooks/use-budget-session'
+import { useBudgetSession, useUpdateBudgetSession } from '../../hooks/use-budget-session'
 import { Loader2 } from 'lucide-react'
 
 interface CreateBudgetWorkspaceProps {

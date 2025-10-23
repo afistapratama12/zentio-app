@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
-import { Button } from '~/components/ui/button'
-import { Input } from '~/components/ui/input'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~/components/ui/table'
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
+import { Button } from '../ui/button'
+import { Input } from '../ui/input'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
 import { Plus, Trash2, Save, Download, AlertCircle, Loader2, Sparkles } from 'lucide-react'
-import { type BudgetItem } from '~/lib/ai-service'
+import { type BudgetItem } from '../../lib/ai-service'
 import { toast } from 'sonner'
-import { cn } from '~/lib/utils'
+import { cn } from '../../lib/utils'
 
 interface BudgetTableSectionProps {
   budget: BudgetItem[]

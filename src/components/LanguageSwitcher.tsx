@@ -5,7 +5,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '~/components/ui/select'
+} from './ui/select'
 import { Languages } from 'lucide-react'
 
 export function LanguageSwitcher() {

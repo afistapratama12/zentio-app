@@ -1,0 +1,17 @@
+<svg width="120" height="32" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#14b8a6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Icon Box -->
+  <rect width="32" height="32" rx="6" fill="url(#logoGrad)"/>
+  
+  <!-- Z Letter -->
+  <path d="M 10 10 L 22 10 L 22 12 L 14 20 L 22 20 L 22 22 L 10 22 L 10 20 L 18 12 L 10 12 Z" fill="white"/>
+  
+  <!-- Text "entio" -->
+  <text x="38" y="22" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="600" fill="white">entio</text>
+</svg>

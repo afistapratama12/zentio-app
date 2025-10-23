@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
-import { Badge as BadgeUI } from '~/components/ui/badge'
-import { Progress } from '~/components/ui/progress'
-import { getUserBadges, getUserProgress, BADGES, type Badge } from '~/lib/rewards'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
+import { Badge as BadgeUI } from './ui/badge'
+import { Progress } from './ui/progress'
+import { getUserBadges, getUserProgress, BADGES, type Badge } from '../lib/rewards'
 import { Trophy, Lock } from 'lucide-react'
 
 interface RewardsPanelProps {

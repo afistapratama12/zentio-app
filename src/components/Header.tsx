@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+// import { Link } from '@tanstack/react-router'
 
 import { useState } from 'react'
 import {
@@ -16,6 +16,7 @@ import {
   Trophy,
 } from 'lucide-react'
 import { LanguageSwitcher } from './LanguageSwitcher'
+import Link from 'next/link'
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
@@ -34,15 +35,13 @@ export default function Header() {
           >
             <Menu size={24} />
           </button>
-          <h1 className="ml-4 text-xl font-semibold">
-            <Link to="/">
-              <img
-                src="/tanstack-word-logo-white.svg"
-                alt="TanStack Logo"
-                className="h-10"
-              />
-            </Link>
-          </h1>
+          <Link href="/" className="ml-4">
+            <img
+              src="/logo-horizontal.svg"
+              alt="Zentio Logo"
+              className="h-8"
+            />
+          </Link>
         </div>
         <div className="mr-2">
           <LanguageSwitcher />
@@ -67,13 +66,13 @@ export default function Header() {
 
         <nav className="flex-1 p-4 overflow-y-auto">
           <Link
-            to="/"
+            href="/"
             onClick={() => setIsOpen(false)}
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
-            activeProps={{
-              className:
-                'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
-            }}
+            // activeProps={{
+            //   className:
+            //     'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
+            // }}
           >
             <Home size={20} />
             <span className="font-medium">Home</span>
@@ -86,52 +85,52 @@ export default function Header() {
             </h3>
             
             <Link
-              to="/app"
+              href="/app"
               onClick={() => setIsOpen(false)}
               className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
-              activeProps={{
-                className:
-                  'flex items-center gap-3 p-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 transition-colors mb-2',
-              }}
+              // activeProps={{
+              //   className:
+              //     'flex items-center gap-3 p-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 transition-colors mb-2',
+              // }}
             >
               <LayoutDashboard size={20} />
               <span className="font-medium">Dashboard</span>
             </Link>
 
             <Link
-              to="/app/history"
+              href="/app/history"
               onClick={() => setIsOpen(false)}
               className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
-              activeProps={{
-                className:
-                  'flex items-center gap-3 p-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 transition-colors mb-2',
-              }}
+              // activeProps={{
+              //   className:
+              //     'flex items-center gap-3 p-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 transition-colors mb-2',
+              // }}
             >
               <History size={20} />
               <span className="font-medium">Budget History</span>
             </Link>
 
             <Link
-              to="/app/profile"
+              href="/app/profile"
               onClick={() => setIsOpen(false)}
               className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
-              activeProps={{
-                className:
-                  'flex items-center gap-3 p-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 transition-colors mb-2',
-              }}
+              // activeProps={{
+              //   className:
+              //     'flex items-center gap-3 p-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 transition-colors mb-2',
+              // }}
             >
               <User size={20} />
               <span className="font-medium">Profile</span>
             </Link>
 
             <Link
-              to="/app/rewards"
+              href="/app/rewards"
               onClick={() => setIsOpen(false)}
               className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
-              activeProps={{
-                className:
-                  'flex items-center gap-3 p-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 transition-colors mb-2',
-              }}
+              // activeProps={{
+              //   className:
+              //     'flex items-center gap-3 p-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 transition-colors mb-2',
+              // }}
             >
               <Trophy size={20} />
               <span className="font-medium">Rewards</span>

@@ -1,4 +1,7 @@
-import { Link, useLocation, useRouter } from '@tanstack/react-router'
+'use client'
+
+// import { Link, useLocation, useRouter } from '@tanstack/react-router'
+// import { useLocation } from "next/Navigation"
 import { useState } from 'react'
 import {
   LayoutDashboard,
@@ -12,7 +15,9 @@ import {
   Wallet,
 } from 'lucide-react'
 import { Button } from './ui/button'
-import { useLogout } from '~/hooks/use-auth'
+import { useLogout } from '../hooks/use-auth'
+import { usePathname, useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -22,14 +27,14 @@ interface AppLayoutProps {
 export default function AppLayout({ children, hideLayout = false }: AppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const location = useLocation()
+  const pathname = usePathname()
   const router = useRouter()
   const logoutMutation = useLogout()
 
   const handleLogout = async () => {
     logoutMutation.mutate(undefined, {
       onSuccess: () => {
-        router.navigate({ to: '/login' })
+        router.push('/login')
       }
     })
   }
@@ -59,7 +64,7 @@ export default function AppLayout({ children, hideLayout = false }: AppLayoutPro
               <Menu className="h-5 w-5 text-gray-700" />
             </button>
 
-            <Link to="/app" className="flex items-center gap-3">
+            <Link href="/app" className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
                 <img src="/logo.svg" alt="Zentio" className="w-8 h-8" />
               </div>
@@ -110,14 +115,14 @@ export default function AppLayout({ children, hideLayout = false }: AppLayoutPro
           <nav className="flex-1 p-4 space-y-2">
             {navItems.map((item) => {
               const isActive = item.exact
-                ? location.pathname === item.to
-                : location.pathname.startsWith(item.to)
+                ? pathname === item.to
+                : pathname.startsWith(item.to)
               const Icon = item.icon
 
               return (
                 <Link
                   key={item.to}
-                  to={item.to}
+                  href={item.to}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                     isActive
                       ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-200'
@@ -194,7 +199,7 @@ export default function AppLayout({ children, hideLayout = false }: AppLayoutPro
                   return (
                     <Link
                       key={item.to}
-                      to={item.to}
+                      href={item.to}
                       onClick={() => setSidebarOpen(false)}
                       className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                         isActive

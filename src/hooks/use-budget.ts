@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { supabase } from '~/lib/supabase'
-import type { Budget, BudgetHistory } from '~/types'
+import { supabase } from '../lib/supabase'
+import type { Budget, BudgetHistory } from '../types'
 
 // Query Keys
 export const budgetKeys = {

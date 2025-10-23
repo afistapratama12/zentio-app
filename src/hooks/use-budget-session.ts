@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { supabase } from '~/lib/supabase'
-import type { BudgetItem, ChatMessage } from '~/lib/ai-service'
-import type { UploadedFile } from '~/lib/file-upload'
-import type { Database } from '~/types/database'
+import { supabase } from '../lib/supabase'
+import type { BudgetItem, ChatMessage } from '../lib/ai-service'
+import type { UploadedFile } from '../lib/file-upload'
+import type { Database } from '../types/database'
 
 type BudgetHistoryInsert = Database['public']['Tables']['budget_history']['Insert']
 

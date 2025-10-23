@@ -1,7 +1,7 @@
 import type { UploadedFile } from './file-upload'
 import { parseCSV } from './file-upload'
 
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 
 export interface Transaction {
   item: string

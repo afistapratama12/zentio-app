@@ -3,7 +3,7 @@ import {
   getUserBadges,
   getUserProgress,
   checkAndAwardBadges,
-} from '~/lib/rewards'
+} from '../lib/rewards'
 
 // Query Keys
 export const rewardsKeys = {

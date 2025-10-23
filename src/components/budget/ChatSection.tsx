@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
-import { Button } from '~/components/ui/button'
-import { Input } from '~/components/ui/input'
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
+import { Button } from '../ui/button'
+import { Input } from '../ui/input'
 import { Send, Bot, User, Loader2, Paperclip } from 'lucide-react'
-import { type ChatMessage } from '~/lib/ai-service'
-import { formatFileSize, type UploadedFile } from '~/lib/file-upload'
-import { cn } from '~/lib/utils'
+import { type ChatMessage } from '../../lib/ai-service'
+import { formatFileSize, type UploadedFile } from '../../lib/file-upload'
+import { cn } from '../../lib/utils'
 
 interface ChatSectionProps {
   messages: ChatMessage[]

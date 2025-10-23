@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import {
   PieChart,
   Pie,
@@ -13,7 +13,7 @@ import {
   CartesianGrid,
 } from 'recharts'
 import { TrendingUp } from 'lucide-react'
-import type { Budget } from '~/types'
+import type { Budget } from '../types'
 
 interface BudgetChartProps {
   budget: Budget[]
