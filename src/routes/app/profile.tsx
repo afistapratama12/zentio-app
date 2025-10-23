@@ -19,12 +19,16 @@ import {
   Shield,
   BarChart3,
   Receipt,
+  Languages,
+  Globe,
 } from 'lucide-react'
 import AppLayout from '~/components/AppLayout'
 import { useAuth, useLogout } from '~/hooks/use-auth'
 import { useUserProfile, useUserStats, useUpdateProfile } from '~/hooks/use-profile'
+import { useLanguage } from '~/contexts/LanguageContext'
 import { toast } from 'sonner'
 import type { UserProfile } from '~/types'
+import type { Language } from '~/lib/i18n'
 
 export const Route = createFileRoute('/app/profile')({
   component: ProfilePage,
@@ -37,6 +41,7 @@ function ProfilePage() {
   const { data: stats, isLoading: statsLoading } = useUserStats(user?.id || '')
   const updateProfileMutation = useUpdateProfile()
   const logoutMutation = useLogout()
+  const { language, setLanguage, t } = useLanguage()
   
   const [profile, setProfile] = useState<UserProfile>({
     name: '',
@@ -385,6 +390,84 @@ function ProfilePage() {
                     💡 <strong>Tip:</strong> Your financial profile helps our AI generate
                     personalized budget recommendations based on your risk tolerance and investment
                     experience.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Language Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Languages className="h-5 w-5 text-emerald-600" />
+                  Language Preferences
+                </CardTitle>
+                <CardDescription>
+                  Choose your preferred language for the dashboard
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="language" className="text-base">Display Language</Label>
+                  <p className="text-sm text-gray-500 mb-3">
+                    Select the language you want to use across the application
+                  </p>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => setLanguage('en')}
+                      className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-all ${
+                        language === 'en'
+                          ? 'border-emerald-500 bg-emerald-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <Globe className="h-5 w-5 text-gray-600" />
+                      <div className="text-left">
+                        <p className="font-semibold text-gray-900">🇬🇧 English</p>
+                        <p className="text-xs text-gray-500">International</p>
+                      </div>
+                      {language === 'en' && (
+                        <div className="ml-auto">
+                          <div className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
+                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        </div>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={() => setLanguage('id')}
+                      className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-all ${
+                        language === 'id'
+                          ? 'border-emerald-500 bg-emerald-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <Globe className="h-5 w-5 text-gray-600" />
+                      <div className="text-left">
+                        <p className="font-semibold text-gray-900">🇮🇩 Indonesia</p>
+                        <p className="text-xs text-gray-500">Bahasa Indonesia</p>
+                      </div>
+                      {language === 'id' && (
+                        <div className="ml-auto">
+                          <div className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
+                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        </div>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <p className="text-sm text-blue-800">
+                    ℹ️ <strong>Note:</strong> Language changes will apply immediately across the dashboard. 
+                    Public pages (homepage, login) are available in English only.
                   </p>
                 </div>
               </CardContent>

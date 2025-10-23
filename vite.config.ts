@@ -6,14 +6,11 @@ import tailwindcss from '@tailwindcss/vite'
 
 const config = defineConfig({
   plugins: [
-    // nitroV2Plugin(),
-    // this is the plugin that enables path aliases
     viteTsConfigPaths({
       projects: ['./tsconfig.json'],
     }),
     tailwindcss(),
     tanstackStart(),
-    // netlify(),
     viteReact(),
   ],
 })

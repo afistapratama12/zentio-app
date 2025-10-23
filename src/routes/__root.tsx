@@ -3,6 +3,7 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import { Toaster } from '~/components/ui/sonner'
 import { QueryProvider } from '~/lib/query-provider'
+import { LanguageProvider } from '~/contexts/LanguageContext'
 
 import appCss from '../styles.css?url'
 
@@ -52,8 +53,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <QueryProvider>
-          {children}
-          <Toaster />
+          <LanguageProvider>
+            {children}
+            <Toaster />
+          </LanguageProvider>
         </QueryProvider>
         <TanStackDevtools
           config={{

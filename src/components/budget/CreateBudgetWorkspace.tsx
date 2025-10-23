@@ -283,7 +283,7 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
     <div className="h-[calc(100vh-4rem)] p-6">
       <div className="h-full">
         {/* Desktop: Split View - Chat 1:3 Budget */}
-        <div className="hidden lg:grid lg:grid-cols-4 lg:gap-6 h-full">
+        <div className="hidden lg:grid lg:grid-cols-3 lg:gap-6 h-full">
           <div className="lg:col-span-1">
             <ChatSection
               messages={chatHistory}
@@ -294,7 +294,7 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
               disabled={false}
             />
           </div>
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-2">
             <BudgetTableSection
               budget={budget}
               estimatedExpense={estimatedExpense}
