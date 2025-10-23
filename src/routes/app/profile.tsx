@@ -1,6 +1,5 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
-import { supabase } from '~/lib/supabase'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
@@ -21,35 +20,24 @@ import {
   BarChart3,
   Receipt,
 } from 'lucide-react'
+import AppLayout from '~/components/AppLayout'
+import { useAuth, useLogout } from '~/hooks/use-auth'
+import { useUserProfile, useUserStats, useUpdateProfile } from '~/hooks/use-profile'
+import { toast } from 'sonner'
+import type { UserProfile } from '~/types'
 
 export const Route = createFileRoute('/app/profile')({
   component: ProfilePage,
 })
 
-interface UserProfile {
-  name: string
-  age: number
-  gender: string
-  marital_status: string
-  job: string
-  location: string
-  investment_level: string
-  financial_type: string
-  avatar_url?: string
-}
-
-interface UserStats {
-  totalBudgets: number
-  totalTransactions: number
-  memberSince: string
-  lastActivity: string
-}
-
 function ProfilePage() {
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [userEmail, setUserEmail] = useState('')
+  const { user } = useAuth()
+  const { data: profileData, isLoading: profileLoading } = useUserProfile(user?.id || '')
+  const { data: stats, isLoading: statsLoading } = useUserStats(user?.id || '')
+  const updateProfileMutation = useUpdateProfile()
+  const logoutMutation = useLogout()
+  
   const [profile, setProfile] = useState<UserProfile>({
     name: '',
     age: 0,
@@ -60,123 +48,66 @@ function ProfilePage() {
     investment_level: '',
     financial_type: '',
   })
-  const [stats, setStats] = useState<UserStats>({
-    totalBudgets: 0,
-    totalTransactions: 0,
-    memberSince: '',
-    lastActivity: '',
-  })
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string>('')
 
+  // Sync profile data from query to local state
   useEffect(() => {
-    loadUserData()
-  }, [])
-
-  async function loadUserData() {
-    try {
-      setLoading(true)
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) {
-        router.navigate({ to: '/login' })
-        return
-      }
-
-      setUserEmail(user.email || '')
-
-      // Load profile
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profile')
-        .select('*')
-        .eq('user_id', user.id)
-        .single()
-
-      if (profileError) {
-        console.error('Error loading profile:', profileError)
-      } else if (profileData) {
-        setProfile({
-          name: profileData.name || '',
-          age: profileData.age || 0,
-          gender: profileData.gender || '',
-          marital_status: profileData.marital_status || '',
-          job: profileData.job || '',
-          location: profileData.location || '',
-          investment_level: profileData.investment_level || '',
-          financial_type: profileData.financial_type || '',
-        })
-      }
-
-      // Load statistics
-      const { data: budgetData } = await supabase
-        .from('budget_history')
-        .select('created_at')
-        .eq('user_id', user.id)
-
-      const { data: transactionData } = await supabase
-        .from('transactions')
-        .select('created_at')
-        .eq('user_id', user.id)
-
-      setStats({
-        totalBudgets: budgetData?.length || 0,
-        totalTransactions: transactionData?.length || 0,
-        memberSince: user.created_at,
-        lastActivity: budgetData?.[0]?.created_at || user.created_at,
+    if (profileData) {
+      setProfile({
+        name: profileData.name || '',
+        age: profileData.age || 0,
+        gender: profileData.gender || '',
+        marital_status: profileData.marital_status || '',
+        job: profileData.job || '',
+        location: profileData.location || '',
+        investment_level: profileData.investment_level || '',
+        financial_type: profileData.financial_type || '',
       })
-    } catch (error) {
-      console.error('Error loading user data:', error)
-    } finally {
-      setLoading(false)
     }
-  }
+  }, [profileData])
+
+  const loading = profileLoading || statsLoading
+  const saving = updateProfileMutation.isPending
+  const userEmail = user?.email || ''
 
   async function handleSaveProfile() {
-    try {
-      setSaving(true)
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) return
+    if (!user) return
 
-      // Upload avatar if new file selected
-      if (avatarFile) {
-        // For now, we'll skip avatar upload since the column doesn't exist yet
-        // This can be added later after adding avatar_url column to database
-        console.log('Avatar upload will be implemented after database update')
-      }
-
-      // Update profile (without avatar_url for now)
-      // Update profile (without avatar_url for now)
-      const { error: updateError } = await supabase
-        .from('user_profile')
-        .update({
-          name: profile.name,
-          age: profile.age,
-          gender: profile.gender,
-          marital_status: profile.marital_status,
-          job: profile.job,
-          location: profile.location,
-          investment_level: profile.investment_level,
-          financial_type: profile.financial_type,
-        })
-        .eq('user_id', user.id)
-
-      if (updateError) throw updateError
-
-      alert('✅ Profile updated successfully!')
-    } catch (error) {
-      console.error('Error saving profile:', error)
-      alert('❌ Failed to update profile. Please try again.')
-    } finally {
-      setSaving(false)
+    // Upload avatar if new file selected
+    if (avatarFile) {
+      // For now, we'll skip avatar upload since the column doesn't exist yet
+      console.log('Avatar upload will be implemented after database update')
     }
+
+    updateProfileMutation.mutate({
+      userId: user.id,
+      profile: {
+        name: profile.name,
+        age: profile.age,
+        gender: profile.gender,
+        marital_status: profile.marital_status,
+        job: profile.job,
+        location: profile.location,
+        investment_level: profile.investment_level,
+        financial_type: profile.financial_type,
+      }
+    }, {
+      onSuccess: () => {
+        toast.success('Profile updated successfully!')
+      },
+      onError: () => {
+        toast.error('Failed to update profile. Please try again.')
+      }
+    })
   }
 
   async function handleLogout() {
-    await supabase.auth.signOut()
-    router.navigate({ to: '/login' })
+    logoutMutation.mutate(undefined, {
+      onSuccess: () => {
+        router.navigate({ to: '/login' })
+      }
+    })
   }
 
   function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -193,8 +124,8 @@ function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 p-6">
-        <div className="max-w-5xl mx-auto">
+      <AppLayout>
+        <div className="max-w-5xl mx-auto py-8">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
             <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
@@ -204,13 +135,13 @@ function ProfilePage() {
             </div>
           </div>
         </div>
-      </div>
+      </AppLayout>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 p-6">
-      <div className="max-w-5xl mx-auto">
+    <AppLayout>
+      <div className="max-w-5xl mx-auto py-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Profile Settings</h1>
@@ -235,7 +166,7 @@ function ProfilePage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      profile.name.charAt(0).toUpperCase() || 'U'
+                      (profile.name || 'U').charAt(0).toUpperCase()
                     )}
                   </div>
                   <label className="absolute bottom-0 right-0 bg-emerald-600 hover:bg-emerald-700 text-white p-2 rounded-full cursor-pointer shadow-lg transition-colors">
@@ -267,14 +198,14 @@ function ProfilePage() {
                     <BarChart3 size={18} />
                     <span>Total Budgets</span>
                   </div>
-                  <Badge variant="default">{stats.totalBudgets}</Badge>
+                  <Badge variant="default">{stats?.totalBudgets || 0}</Badge>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-gray-600">
                     <Receipt size={18} />
                     <span>Total Transactions</span>
                   </div>
-                  <Badge variant="default">{stats.totalTransactions}</Badge>
+                  <Badge variant="default">{stats?.totalTransactions || 0}</Badge>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-gray-600">
@@ -282,10 +213,10 @@ function ProfilePage() {
                     <span>Member Since</span>
                   </div>
                   <span className="text-sm text-gray-700">
-                    {new Date(stats.memberSince).toLocaleDateString('id-ID', {
+                    {stats?.memberSince ? new Date(stats.memberSince).toLocaleDateString('id-ID', {
                       month: 'short',
                       year: 'numeric',
-                    })}
+                    }) : '-'}
                   </span>
                 </div>
               </CardContent>
@@ -486,7 +417,23 @@ function ProfilePage() {
 
             {/* Save Button */}
             <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={loadUserData}>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  if (profileData) {
+                    setProfile({
+                      name: profileData.name || '',
+                      age: profileData.age || 0,
+                      gender: profileData.gender || '',
+                      marital_status: profileData.marital_status || '',
+                      job: profileData.job || '',
+                      location: profileData.location || '',
+                      investment_level: profileData.investment_level || '',
+                      financial_type: profileData.financial_type || '',
+                    })
+                  }
+                }}
+              >
                 Cancel
               </Button>
               <Button onClick={handleSaveProfile} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">
@@ -497,6 +444,6 @@ function ProfilePage() {
           </div>
         </div>
       </div>
-    </div>
+    </AppLayout>
   )
 }

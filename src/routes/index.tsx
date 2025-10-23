@@ -17,10 +17,25 @@ import {
   Trophy,
   ArrowRight,
 } from 'lucide-react'
+import { useUser } from '@/hooks/use-auth'
+import { useCallback } from 'react'
 
 export const Route = createFileRoute('/')({ component: HomePage })
 
 function HomePage() {
+  const user = useUser()
+
+  const handleStart = useCallback(() => {
+    if (user.data) {
+      // Redirect to dashboard
+      window.location.href = '/app'
+      return
+    } else {
+      // Redirect to login page
+      window.location.href = '/login'
+    }
+  }, [user.data])
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50">
       {/* Hero Section */}
@@ -39,12 +54,12 @@ function HomePage() {
               Upload foto struk belanja, biarkan AI kami menganalisis pengeluaran, dan dapatkan budget personal yang disesuaikan dengan gaya hidup Anda.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/login">
-                <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white">
+              {/* <Link to="/login"> */}
+                <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleStart}>
                   Mulai Gratis
                   <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
-              </Link>
+              {/* </Link> */}
               <Button size="lg" variant="outline">
                 Lihat Demo
               </Button>

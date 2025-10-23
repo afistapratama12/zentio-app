@@ -102,7 +102,7 @@ export default function RewardsPanel({ userId }: RewardsPanelProps) {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <div>
+          <div className='space-y-2'>
             <CardTitle className="flex items-center gap-2">
               <Trophy className="h-5 w-5 text-yellow-500" />
               Achievements

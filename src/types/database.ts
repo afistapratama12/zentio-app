@@ -17,26 +17,53 @@ export type Database = {
       budget_history: {
         Row: {
           ai_generated_budget: Json
+          budget_type: string | null
+          chat_history: Json | null
           created_at: string
+          edit_count: number | null
+          end_date: string | null
+          estimated_expense: number | null
           id: string
+          last_ai_feedback: string | null
           manual_adjustments: Json | null
           period: string
+          start_date: string | null
+          status: string | null
+          uploaded_files: Json | null
           user_id: string
         }
         Insert: {
           ai_generated_budget: Json
+          budget_type?: string | null
+          chat_history?: Json | null
           created_at?: string
+          edit_count?: number | null
+          end_date?: string | null
+          estimated_expense?: number | null
           id?: string
+          last_ai_feedback?: string | null
           manual_adjustments?: Json | null
           period: string
+          start_date?: string | null
+          status?: string | null
+          uploaded_files?: Json | null
           user_id: string
         }
         Update: {
           ai_generated_budget?: Json
+          budget_type?: string | null
+          chat_history?: Json | null
           created_at?: string
+          edit_count?: number | null
+          end_date?: string | null
+          estimated_expense?: number | null
           id?: string
+          last_ai_feedback?: string | null
           manual_adjustments?: Json | null
           period?: string
+          start_date?: string | null
+          status?: string | null
+          uploaded_files?: Json | null
           user_id?: string
         }
         Relationships: []

@@ -13,9 +13,11 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app/index'
+import { Route as AuthConfirmRouteImport } from './routes/auth/confirm'
 import { Route as AppRewardsRouteImport } from './routes/app/rewards'
 import { Route as AppProfileRouteImport } from './routes/app/profile'
 import { Route as AppHistoryRouteImport } from './routes/app/history'
+import { Route as AppCreateBudgetRouteImport } from './routes/app/create-budget'
 import { Route as ApiAnalyzeTransactionsRouteImport } from './routes/api/analyze-transactions'
 
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -38,6 +40,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/app/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthConfirmRoute = AuthConfirmRouteImport.update({
+  id: '/auth/confirm',
+  path: '/auth/confirm',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRewardsRoute = AppRewardsRouteImport.update({
   id: '/app/rewards',
   path: '/app/rewards',
@@ -53,6 +60,11 @@ const AppHistoryRoute = AppHistoryRouteImport.update({
   path: '/app/history',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppCreateBudgetRoute = AppCreateBudgetRouteImport.update({
+  id: '/app/create-budget',
+  path: '/app/create-budget',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAnalyzeTransactionsRoute = ApiAnalyzeTransactionsRouteImport.update({
   id: '/api/analyze-transactions',
   path: '/api/analyze-transactions',
@@ -64,9 +76,11 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/api/analyze-transactions': typeof ApiAnalyzeTransactionsRoute
+  '/app/create-budget': typeof AppCreateBudgetRoute
   '/app/history': typeof AppHistoryRoute
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
+  '/auth/confirm': typeof AuthConfirmRoute
   '/app': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
@@ -74,9 +88,11 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/api/analyze-transactions': typeof ApiAnalyzeTransactionsRoute
+  '/app/create-budget': typeof AppCreateBudgetRoute
   '/app/history': typeof AppHistoryRoute
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
+  '/auth/confirm': typeof AuthConfirmRoute
   '/app': typeof AppIndexRoute
 }
 export interface FileRoutesById {
@@ -85,9 +101,11 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/api/analyze-transactions': typeof ApiAnalyzeTransactionsRoute
+  '/app/create-budget': typeof AppCreateBudgetRoute
   '/app/history': typeof AppHistoryRoute
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
+  '/auth/confirm': typeof AuthConfirmRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
@@ -97,9 +115,11 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/api/analyze-transactions'
+    | '/app/create-budget'
     | '/app/history'
     | '/app/profile'
     | '/app/rewards'
+    | '/auth/confirm'
     | '/app'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -107,9 +127,11 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/api/analyze-transactions'
+    | '/app/create-budget'
     | '/app/history'
     | '/app/profile'
     | '/app/rewards'
+    | '/auth/confirm'
     | '/app'
   id:
     | '__root__'
@@ -117,9 +139,11 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/api/analyze-transactions'
+    | '/app/create-budget'
     | '/app/history'
     | '/app/profile'
     | '/app/rewards'
+    | '/auth/confirm'
     | '/app/'
   fileRoutesById: FileRoutesById
 }
@@ -128,9 +152,11 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   ApiAnalyzeTransactionsRoute: typeof ApiAnalyzeTransactionsRoute
+  AppCreateBudgetRoute: typeof AppCreateBudgetRoute
   AppHistoryRoute: typeof AppHistoryRoute
   AppProfileRoute: typeof AppProfileRoute
   AppRewardsRoute: typeof AppRewardsRoute
+  AuthConfirmRoute: typeof AuthConfirmRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
@@ -164,6 +190,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/confirm': {
+      id: '/auth/confirm'
+      path: '/auth/confirm'
+      fullPath: '/auth/confirm'
+      preLoaderRoute: typeof AuthConfirmRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/rewards': {
       id: '/app/rewards'
       path: '/app/rewards'
@@ -185,6 +218,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppHistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/create-budget': {
+      id: '/app/create-budget'
+      path: '/app/create-budget'
+      fullPath: '/app/create-budget'
+      preLoaderRoute: typeof AppCreateBudgetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/analyze-transactions': {
       id: '/api/analyze-transactions'
       path: '/api/analyze-transactions'
@@ -200,9 +240,11 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   ApiAnalyzeTransactionsRoute: ApiAnalyzeTransactionsRoute,
+  AppCreateBudgetRoute: AppCreateBudgetRoute,
   AppHistoryRoute: AppHistoryRoute,
   AppProfileRoute: AppProfileRoute,
   AppRewardsRoute: AppRewardsRoute,
+  AuthConfirmRoute: AuthConfirmRoute,
   AppIndexRoute: AppIndexRoute,
 }
 export const routeTree = rootRouteImport

@@ -1,67 +1,47 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
-import { supabase } from '~/lib/supabase'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
 import { Badge as BadgeUI } from '~/components/ui/badge'
 import { Progress } from '~/components/ui/progress'
-import { getUserBadges, getUserProgress, BADGES, type Badge } from '~/lib/rewards'
+import { BADGES, type Badge } from '~/lib/rewards'
 import { Trophy, Award, Target, Lock, TrendingUp } from 'lucide-react'
+import AppLayout from '~/components/AppLayout'
+import { useAuth } from '~/hooks/use-auth'
+import { useUserBadges, useUserProgress } from '~/hooks/use-rewards'
 
 export const Route = createFileRoute('/app/rewards')({
   component: RewardsPage,
 })
 
 function RewardsPage() {
-  const [earnedBadges, setEarnedBadges] = useState<Badge[]>([])
-  const [progress, setProgress] = useState({
+  const { user } = useAuth()
+  const { data: earnedBadges = [], isLoading: badgesLoading } = useUserBadges(user?.id || '')
+  const { data: progress, isLoading: progressLoading } = useUserProgress(user?.id || '')
+  
+  const loading = badgesLoading || progressLoading
+
+  const currentProgress = progress || {
     budgetCount: 0,
     transactionCount: 0,
     hasSavingsTarget: false,
     hasEarlyBudget: false,
     consecutiveMonths: 0,
     categoriesCount: 0,
-  })
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    loadRewards()
-  }, [])
-
-  async function loadRewards() {
-    try {
-      setLoading(true)
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) return
-
-      const [badges, progressData] = await Promise.all([
-        getUserBadges(user.id),
-        getUserProgress(user.id),
-      ])
-      setEarnedBadges(badges)
-      setProgress(progressData)
-    } catch (error) {
-      console.error('Error loading rewards:', error)
-    } finally {
-      setLoading(false)
-    }
   }
 
   function getBadgeProgress(badge: Badge): number {
     switch (badge.criteria) {
       case 'budgets':
-        return Math.min((progress.budgetCount / badge.requirement) * 100, 100)
+        return Math.min((currentProgress.budgetCount / badge.requirement) * 100, 100)
       case 'transactions':
-        return Math.min((progress.transactionCount / badge.requirement) * 100, 100)
+        return Math.min((currentProgress.transactionCount / badge.requirement) * 100, 100)
       case 'savings':
-        return progress.hasSavingsTarget ? 100 : 0
+        return currentProgress.hasSavingsTarget ? 100 : 0
       case 'early-budget':
-        return progress.hasEarlyBudget ? 100 : 0
+        return currentProgress.hasEarlyBudget ? 100 : 0
       case 'consecutive-months':
-        return Math.min((progress.consecutiveMonths / badge.requirement) * 100, 100)
+        return Math.min((currentProgress.consecutiveMonths / badge.requirement) * 100, 100)
       case 'all-categories':
-        return Math.min((progress.categoriesCount / badge.requirement) * 100, 100)
+        return Math.min((currentProgress.categoriesCount / badge.requirement) * 100, 100)
       default:
         return 0
     }
@@ -70,19 +50,19 @@ function RewardsPage() {
   function getProgressText(badge: Badge): string {
     switch (badge.criteria) {
       case 'budgets':
-        return `${progress.budgetCount} / ${badge.requirement} budgets created`
+        return `${currentProgress.budgetCount} / ${badge.requirement} budgets created`
       case 'transactions':
-        return `${progress.transactionCount} / ${badge.requirement} transactions uploaded`
+        return `${currentProgress.transactionCount} / ${badge.requirement} transactions uploaded`
       case 'savings':
-        return progress.hasSavingsTarget ? '✓ Completed!' : 'Set a savings target in your budget'
+        return currentProgress.hasSavingsTarget ? '✓ Completed!' : 'Set a savings target in your budget'
       case 'early-budget':
-        return progress.hasEarlyBudget
+        return currentProgress.hasEarlyBudget
           ? '✓ Completed!'
           : 'Create budget in first 7 days of month'
       case 'consecutive-months':
-        return `${progress.consecutiveMonths} / ${badge.requirement} consecutive months`
+        return `${currentProgress.consecutiveMonths} / ${badge.requirement} consecutive months`
       case 'all-categories':
-        return `${progress.categoriesCount} / ${badge.requirement} categories used`
+        return `${currentProgress.categoriesCount} / ${badge.requirement} categories used`
       default:
         return ''
     }
@@ -94,7 +74,7 @@ function RewardsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 p-6">
+      <AppLayout>
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
@@ -104,13 +84,13 @@ function RewardsPage() {
             </div>
           </div>
         </div>
-      </div>
+      </AppLayout>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <AppLayout>
+      <div className="max-w-7xl mx-auto py-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
@@ -147,18 +127,18 @@ function RewardsPage() {
                 <div className="text-sm text-gray-600 mt-1">Badges Earned</div>
               </div>
               <div className="text-center p-4 bg-white rounded-lg border">
-                <div className="text-3xl font-bold text-blue-600">{progress.budgetCount}</div>
+                <div className="text-3xl font-bold text-blue-600">{currentProgress.budgetCount}</div>
                 <div className="text-sm text-gray-600 mt-1">Budgets Created</div>
               </div>
               <div className="text-center p-4 bg-white rounded-lg border">
                 <div className="text-3xl font-bold text-purple-600">
-                  {progress.transactionCount}
+                  {currentProgress.transactionCount}
                 </div>
                 <div className="text-sm text-gray-600 mt-1">Transactions</div>
               </div>
               <div className="text-center p-4 bg-white rounded-lg border">
                 <div className="text-3xl font-bold text-orange-600">
-                  {progress.consecutiveMonths}
+                  {currentProgress.consecutiveMonths}
                 </div>
                 <div className="text-sm text-gray-600 mt-1">Consecutive Months</div>
               </div>
@@ -288,6 +268,6 @@ function RewardsPage() {
           </Card>
         )}
       </div>
-    </div>
+    </AppLayout>
   )
 }

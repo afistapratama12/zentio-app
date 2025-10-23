@@ -13,7 +13,7 @@ import { Button } from '~/components/ui/button'
 import { Badge } from '~/components/ui/badge'
 import { Save, Edit2, X, Check, DollarSign } from 'lucide-react'
 import { toast } from 'sonner'
-import type { Budget } from '~/routes/app/'
+import type { Budget } from '~/types'
 
 interface BudgetTableProps {
   budget: Budget[]

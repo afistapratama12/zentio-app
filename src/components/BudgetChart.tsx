@@ -13,7 +13,7 @@ import {
   CartesianGrid,
 } from 'recharts'
 import { TrendingUp } from 'lucide-react'
-import type { Budget } from '~/routes/app/'
+import type { Budget } from '~/types'
 
 interface BudgetChartProps {
   budget: Budget[]

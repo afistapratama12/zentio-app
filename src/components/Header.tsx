@@ -6,9 +6,9 @@ import {
   ChevronRight,
   Home,
   Menu,
-  Network,
-  SquareFunction,
-  StickyNote,
+  // Network,
+  // SquareFunction,
+  // StickyNote,
   X,
   History,
   LayoutDashboard,
@@ -139,7 +139,7 @@ export default function Header() {
               Demo Examples
             </h3>
 
-          <Link
+          {/* <Link
             to="/demo/start/server-funcs"
             onClick={() => setIsOpen(false)}
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
@@ -163,10 +163,10 @@ export default function Header() {
           >
             <Network size={20} />
             <span className="font-medium">Start - API Request</span>
-          </Link>
+          </Link> */}
 
           <div className="flex flex-row justify-between">
-            <Link
+            {/* <Link
               to="/demo/start/ssr"
               onClick={() => setIsOpen(false)}
               className="flex-1 flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
@@ -177,7 +177,7 @@ export default function Header() {
             >
               <StickyNote size={20} />
               <span className="font-medium">Start - SSR Demos</span>
-            </Link>
+            </Link> */}
             <button
               className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
               onClick={() =>
@@ -196,7 +196,7 @@ export default function Header() {
           </div>
           {groupedExpanded.StartSSRDemo && (
             <div className="flex flex-col ml-4">
-              <Link
+              {/* <Link
                 to="/demo/start/ssr/spa-mode"
                 onClick={() => setIsOpen(false)}
                 className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
@@ -233,7 +233,7 @@ export default function Header() {
               >
                 <StickyNote size={20} />
                 <span className="font-medium">Data Only</span>
-              </Link>
+              </Link> */}
             </div>
           )}
           </div>

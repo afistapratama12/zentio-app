@@ -6,7 +6,7 @@ import { Badge } from '~/components/ui/badge'
 import { openai } from '~/lib/openai'
 import { toast } from 'sonner'
 import { Bot, User, Send, Loader2, Sparkles } from 'lucide-react'
-import type { Budget } from '~/routes/app/'
+import type { Budget } from '~/types'
 
 interface Message {
   role: 'assistant' | 'user'

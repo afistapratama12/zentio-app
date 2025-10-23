@@ -1,27 +1,17 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
-import { supabase } from '~/lib/supabase'
-import type { Budget } from '~/routes/app/'
+import { useState, useEffect, useMemo } from 'react'
+import type { Budget } from '~/types'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
 import { Badge } from '~/components/ui/badge'
 import { Calendar, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import AppLayout from '~/components/AppLayout'
+import { useAuth } from '~/hooks/use-auth'
+import { useBudgetHistory } from '~/hooks/use-budget'
 
 export const Route = createFileRoute('/app/history')({
   component: HistoryPage,
 })
-
-interface BudgetHistory {
-  id: string
-  user_id: string
-  period: string // YYYY-MM format
-  ai_generated_budget: {
-    explanation?: string
-    budget: Budget[]
-    savings_target?: number
-  }
-  created_at: string
-}
 
 interface TimelineDataPoint {
   period: string
@@ -30,68 +20,39 @@ interface TimelineDataPoint {
 }
 
 function HistoryPage() {
-  const [budgetHistory, setBudgetHistory] = useState<BudgetHistory[]>([])
-  const [timelineData, setTimelineData] = useState<TimelineDataPoint[]>([])
+  const { user } = useAuth()
+  const { data: budgetHistory = [], isLoading: loading } = useBudgetHistory(user?.id || '')
   const [selectedPeriods, setSelectedPeriods] = useState<string[]>([])
-  const [loading, setLoading] = useState(true)
 
+  // Select last 2 periods for comparison by default
   useEffect(() => {
-    loadBudgetHistory()
-  }, [])
+    if (budgetHistory.length >= 2) {
+      setSelectedPeriods([budgetHistory[0].period, budgetHistory[1].period])
+    } else if (budgetHistory.length === 1) {
+      setSelectedPeriods([budgetHistory[0].period])
+    }
+  }, [budgetHistory])
 
-  async function loadBudgetHistory() {
-    try {
-      setLoading(true)
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      const { data, error } = await supabase
-        .from('budget_history')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-
-      if (data) {
-        // Cast to BudgetHistory type
-        const typedData = data as unknown as BudgetHistory[]
-        setBudgetHistory(typedData)
-        
-        // Select last 2 periods for comparison by default
-        if (typedData.length >= 2) {
-          setSelectedPeriods([typedData[0].period, typedData[1].period])
-        } else if (typedData.length === 1) {
-          setSelectedPeriods([typedData[0].period])
+  // Prepare timeline data
+  const timelineData = useMemo(() => {
+    return [...budgetHistory]
+      .reverse()
+      .map((history) => {
+        const point: TimelineDataPoint = {
+          period: formatPeriod(history.period),
+          total: 0,
         }
 
-        // Prepare timeline data
-        const timeline = typedData
-          .reverse()
-          .map((history) => {
-            const point: TimelineDataPoint = {
-              period: formatPeriod(history.period),
-              total: 0,
-            }
-
-            if (history.ai_generated_budget?.budget) {
-              history.ai_generated_budget.budget.forEach((item: Budget) => {
-                point[item.category] = item.amount
-                point.total += item.amount
-              })
-            }
-
-            return point
+        if (history.ai_generated_budget?.budget) {
+          history.ai_generated_budget.budget.forEach((item: Budget) => {
+            point[item.category] = item.amount
+            point.total += item.amount
           })
+        }
 
-        setTimelineData(timeline)
-      }
-    } catch (error) {
-      console.error('Error loading budget history:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+        return point
+      })
+  }, [budgetHistory])
 
   function formatPeriod(period: string): string {
     const [year, month] = period.split('-')
@@ -153,9 +114,28 @@ function HistoryPage() {
     return 'text-gray-600'
   }
 
-  const categories = budgetHistory.length > 0 
-    ? Array.from(new Set(budgetHistory.flatMap(h => h.ai_generated_budget?.budget?.map(b => b.category) || [])))
-    : []
+  const categories = useMemo(() => 
+    budgetHistory.length > 0 
+      ? Array.from(new Set(budgetHistory.flatMap(h => h.ai_generated_budget?.budget?.map(b => b.category) || [])))
+      : [],
+    [budgetHistory]
+  )
+
+  // Get comparison data
+  const comparisonData = useMemo(() => {
+    if (selectedPeriods.length < 2) return []
+    
+    const current = budgetHistory.find(h => h.period === selectedPeriods[0])
+    const previous = budgetHistory.find(h => h.period === selectedPeriods[1])
+    
+    if (current?.ai_generated_budget?.budget && previous?.ai_generated_budget?.budget) {
+      return calculateDifference(
+        current.ai_generated_budget.budget,
+        previous.ai_generated_budget.budget
+      )
+    }
+    return []
+  }, [budgetHistory, selectedPeriods])
 
   const COLORS = [
     '#10b981', '#14b8a6', '#06b6d4', '#3b82f6', 
@@ -164,8 +144,8 @@ function HistoryPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 p-6">
-        <div className="max-w-7xl mx-auto">
+      <AppLayout>
+        <div className="max-w-7xl mx-auto py-8">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
             <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
@@ -175,14 +155,14 @@ function HistoryPage() {
             </div>
           </div>
         </div>
-      </div>
+      </AppLayout>
     )
   }
 
   if (budgetHistory.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 p-6">
-        <div className="max-w-7xl mx-auto">
+      <AppLayout>
+        <div className="max-w-7xl mx-auto py-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Budget History</h1>
           <p className="text-gray-600 mb-8">Track your budget evolution over time</p>
 
@@ -196,29 +176,13 @@ function HistoryPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </AppLayout>
     )
   }
 
-  // Get comparison data
-  const comparisonData = selectedPeriods.length >= 2
-    ? (() => {
-        const current = budgetHistory.find(h => h.period === selectedPeriods[0])
-        const previous = budgetHistory.find(h => h.period === selectedPeriods[1])
-        
-        if (current?.ai_generated_budget?.budget && previous?.ai_generated_budget?.budget) {
-          return calculateDifference(
-            current.ai_generated_budget.budget,
-            previous.ai_generated_budget.budget
-          )
-        }
-        return []
-      })()
-    : []
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <AppLayout>
+      <div className="max-w-7xl mx-auto py-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Budget History</h1>
@@ -432,6 +396,6 @@ function HistoryPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </AppLayout>
   )
 }

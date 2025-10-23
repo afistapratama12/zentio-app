@@ -2,8 +2,7 @@ import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import { Toaster } from '~/components/ui/sonner'
-
-import Header from '../components/Header'
+import { QueryProvider } from '~/lib/query-provider'
 
 import appCss from '../styles.css?url'
 
@@ -18,17 +17,22 @@ export const Route = createRootRoute({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'Zentio - AI Budget Planning',
+        title: 'Zentio - AI Budgeting',
       },
       {
         name: 'description',
-        content: 'Bangun Financial Plan Cerdas Berbasis AI — Dari Transaksi Harian Hingga Budget Masa Depan',
+        content: 'Smart AI-Powered Budget Planning - From Daily Transactions to Future Financial Goals',
       },
     ],
     links: [
       {
         rel: 'stylesheet',
         href: appCss,
+      },
+      {
+        rel: 'icon',
+        type: 'image/svg+xml',
+        href: '/favicon.svg',
       },
     ],
   }),
@@ -43,9 +47,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <Header />
-        {children}
-        <Toaster />
+        <QueryProvider>
+          {children}
+          <Toaster />
+        </QueryProvider>
         <TanStackDevtools
           config={{
             position: 'bottom-right',

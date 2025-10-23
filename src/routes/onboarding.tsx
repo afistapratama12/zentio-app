@@ -1,14 +1,13 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect, useRef } from 'react'
-import { supabase } from '~/lib/supabase'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Card, CardContent } from '~/components/ui/card'
 import { toast } from 'sonner'
 import { Loader2, Send, Sparkles, User, Bot } from 'lucide-react'
-import type { Database } from '~/types/database'
-
-type UserProfileInsert = Database['public']['Tables']['user_profile']['Insert']
+import AppLayout from '~/components/AppLayout'
+import { useAuth } from '~/hooks/use-auth'
+import { useCreateProfile } from '~/hooks/use-profile'
 
 export const Route = createFileRoute('/onboarding')({
   component: OnboardingPage,
@@ -32,6 +31,8 @@ interface UserProfile {
 
 function OnboardingPage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const createProfileMutation = useCreateProfile()
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
@@ -86,10 +87,6 @@ function OnboardingPage() {
     setMessages((prev) => [...prev, { role: 'user', content: userMessage }])
 
     try {
-      // Get current user
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
       if (!user) {
         toast.error('Sesi login tidak valid')
         navigate({ to: '/' })
@@ -113,46 +110,38 @@ function OnboardingPage() {
           ...prev,
           { role: 'assistant', content: questions[nextQuestion].prompt },
         ])
+        setLoading(false)
       } else {
-        // All questions answered, save to database
-        const profileData: UserProfileInsert = {
-          user_id: user.id,
-          name: (updatedProfile.name as string) || '',
-          age:
-            typeof updatedProfile.age === 'number' ? updatedProfile.age : null,
-          gender: (updatedProfile.gender as string) || null,
-          marital_status: (updatedProfile.marital_status as string) || null,
-          job: (updatedProfile.job as string) || null,
-          location: (updatedProfile.location as string) || null,
-          investment_level: (updatedProfile.investment_level as string) || null,
-          financial_type: (updatedProfile.financial_type as string) || null,
-        }
-
-        const { error } = await supabase.from('user_profile').insert(profileData)
-
-        if (error) {
-          console.error('Error saving profile:', error)
-          toast.error('Gagal menyimpan profil. Silakan coba lagi.')
-          setLoading(false)
-          return
-        }
-
-        // Show completion message
-        setMessages((prev) => [
-          ...prev,
+        // All questions answered, save to database using mutation
+        createProfileMutation.mutate(
           {
-            role: 'assistant',
-            content:
-              '🎉 Terima kasih! Profil Anda sudah lengkap. Mengarahkan ke dashboard...',
+            userId: user.id,
+            profile: updatedProfile
           },
-        ])
+          {
+            onSuccess: () => {
+              // Show completion message
+              setMessages((prev) => [
+                ...prev,
+                {
+                  role: 'assistant',
+                  content:
+                    '🎉 Terima kasih! Profil Anda sudah lengkap. Mengarahkan ke dashboard...',
+                },
+              ])
 
-        setTimeout(() => {
-          navigate({ to: '/app' })
-        }, 2000)
+              setTimeout(() => {
+                navigate({ to: '/app' })
+              }, 2000)
+            },
+            onError: (error) => {
+              console.error('Error saving profile:', error)
+              toast.error('Gagal menyimpan profil. Silakan coba lagi.')
+              setLoading(false)
+            }
+          }
+        )
       }
-
-      setLoading(false)
     } catch (error: any) {
       toast.error(error.message || 'Terjadi kesalahan')
       setLoading(false)
@@ -167,7 +156,7 @@ function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 p-4">
+    <AppLayout hideLayout>
       <div className="max-w-3xl mx-auto pt-8 pb-24">
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full text-sm font-medium mb-4">
@@ -260,6 +249,6 @@ function OnboardingPage() {
           </div>
         </div>
       </div>
-    </div>
+    </AppLayout>
   )
 }

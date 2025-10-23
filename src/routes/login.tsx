@@ -6,7 +6,8 @@ import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
 import { toast } from 'sonner'
-import { Loader2, Sparkles } from 'lucide-react'
+import { Loader2, Sparkles, Mail, CheckCircle2 } from 'lucide-react'
+import { useLogin, useSignup } from '~/hooks/use-auth'
 
 export const Route = createFileRoute('/login')({
   component: LoginPage,
@@ -15,10 +16,13 @@ export const Route = createFileRoute('/login')({
 function LoginPage() {
   const navigate = useNavigate()
   const [isLogin, setIsLogin] = useState(true)
-  const [loading, setLoading] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [showEmailSent, setShowEmailSent] = useState(false)
+
+  const loginMutation = useLogin()
+  const signupMutation = useSignup()
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,17 +32,10 @@ function LoginPage() {
       return
     }
 
-    setLoading(true)
-
     try {
       if (isLogin) {
         // Login
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        })
-
-        if (error) throw error
+        const result = await loginMutation.mutateAsync({ email, password })
 
         toast.success('Login berhasil!')
         
@@ -46,42 +43,95 @@ function LoginPage() {
         const { data: profile } = await supabase
           .from('user_profile')
           .select('*')
-          .eq('user_id', data.user.id)
+          .eq('user_id', result.user.id)
           .single()
 
         if (!profile) {
-          // Redirect to onboarding
           navigate({ to: '/onboarding' })
         } else {
-          // Redirect to app
           navigate({ to: '/app' })
         }
       } else {
         // Sign up
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-        })
+        const result = await signupMutation.mutateAsync({ email, password })
 
-        if (error) throw error
-
-        if (data.user) {
+        if (result.user) {
+          // Show email verification message instead of navigating
+          setShowEmailSent(true)
           toast.success('Akun berhasil dibuat! Silakan cek email untuk verifikasi.')
-          // Auto login after signup
-          navigate({ to: '/onboarding' })
         }
       }
     } catch (error: any) {
       toast.error(error.message || 'Terjadi kesalahan')
-    } finally {
-      setLoading(false)
     }
+  }
+
+  const loading = loginMutation.isPending || signupMutation.isPending
+
+  // Email sent success view
+  if (showEmailSent) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 w-16 h-16 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center">
+              <Mail className="h-8 w-8 text-white" />
+            </div>
+            <CardTitle className="text-2xl">Check Your Email</CardTitle>
+            <CardDescription>
+              We've sent a verification link to <strong>{email}</strong>
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 space-y-3">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-emerald-800">
+                  <p className="font-medium mb-1">Email Sent Successfully!</p>
+                  <p className="text-emerald-700">
+                    Click the verification link in your email to activate your account.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2 text-sm text-gray-600">
+              <p className="font-medium">Next Steps:</p>
+              <ol className="list-decimal list-inside space-y-1 ml-2">
+                <li>Open your email inbox</li>
+                <li>Look for email from Zentio</li>
+                <li>Click the verification link</li>
+                <li>You'll be redirected to the app</li>
+              </ol>
+            </div>
+
+            <div className="pt-4 border-t space-y-2">
+              <p className="text-xs text-gray-500 text-center">
+                Didn't receive the email? Check your spam folder.
+              </p>
+              <Button
+                onClick={() => setShowEmailSent(false)}
+                variant="outline"
+                className="w-full"
+              >
+                Back to Login
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
+          <div className="mb-6 flex justify-center">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-2xl shadow-emerald-200">
+              <img src="/logo.svg" alt="Zentio" className="w-16 h-16" />
+            </div>
+          </div>
           <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full text-sm font-medium mb-4">
             <Sparkles className="w-4 h-4" />
             Zentio AI Budgeting

@@ -1,0 +1,32 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle Gradient -->
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#14b8a6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f0fdf4;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Outer Circle -->
+  <circle cx="100" cy="100" r="95" fill="url(#grad1)"/>
+  
+  <!-- Inner Circle -->
+  <circle cx="100" cy="100" r="75" fill="url(#grad2)"/>
+  
+  <!-- Z Letter with modern design -->
+  <path d="M 60 60 L 140 60 L 140 75 L 85 125 L 140 125 L 140 140 L 60 140 L 60 125 L 115 75 L 60 75 Z" fill="url(#grad1)"/>
+  
+  <!-- Coin Stack Icon -->
+  <ellipse cx="130" cy="130" rx="15" ry="5" fill="#10b981" opacity="0.8"/>
+  <ellipse cx="130" cy="125" rx="15" ry="5" fill="#10b981" opacity="0.9"/>
+  <ellipse cx="130" cy="120" rx="15" ry="5" fill="#10b981"/>
+  
+  <!-- AI Sparkle -->
+  <circle cx="70" cy="70" r="3" fill="#fbbf24"/>
+  <circle cx="75" cy="65" r="2" fill="#fbbf24"/>
+  <circle cx="65" cy="65" r="2" fill="#fbbf24"/>
+</svg>

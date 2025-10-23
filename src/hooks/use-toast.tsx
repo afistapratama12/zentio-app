@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { toast as sonnerToast } from 'sonner'
 
 type ToastProps = {
   title: string
@@ -14,15 +15,14 @@ const ToastContext = React.createContext<ToastContextType | undefined>(undefined
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const toast = React.useCallback((props: ToastProps) => {
-    // Simple browser alert for now - can be replaced with a proper toast library
     const message = props.description 
-      ? `${props.title}\n${props.description}` 
+      ? `${props.title} - ${props.description}` 
       : props.title
     
     if (props.variant === 'destructive') {
-      alert(`❌ ${message}`)
+      sonnerToast.error(message)
     } else {
-      alert(`✅ ${message}`)
+      sonnerToast.success(message)
     }
   }, [])
 
