@@ -26,28 +26,85 @@ if (!session) {
 
 **Route:** `/api/analyze-transactions`  
 **Method:** `POST`  
-**Auth:** Required
+**Auth:** Not Required (can be public or protected)
 
-**Request:**
+**Description:**  
+Analyze multiple files (images, videos, CSV) containing transaction data using GPT-4o Vision AI. Supports batch processing of mixed file types in a single request.
+
+**Supported File Types:**
+- Images: `image/jpeg`, `image/png`, `image/webp` (max 10MB each)
+- Videos: `video/mp4`, `video/quicktime` (max 50MB each)
+- CSV: `text/csv` (max 5MB each)
+
+**Request (FormData):**
 ```typescript
-{
-  files: File[], // Array of image/video files
-  // OR
-  csvData: string // CSV text content
-}
+const formData = new FormData()
+formData.append('file_0', csvFile)      // CSV file
+formData.append('file_1', imageFile)    // Receipt image
+formData.append('file_2', videoFile)    // Video file
+// ... add more files as needed
+
+fetch('/api/analyze-transactions', {
+  method: 'POST',
+  body: formData
+})
 ```
 
 **Response:**
 ```typescript
 {
+  success: boolean
   transactions: [
     {
-      date: string // "2025-09-12"
-      merchant: string // "Starbucks"
-      category: string // "Food & Beverage"
-      amount: number // 58000
-      type: "necessity" | "luxury"
+      item: string        // "Nasi Goreng"
+      amount: number      // 25000 (pure number, no currency)
+      category: string    // "Food" | "Drink" | "Transportation" | etc.
+      date: string        // "2025-10-24" (ISO format)
     }
+  ]
+  count: number          // Total transactions found
+}
+```
+
+**Categories:**
+- Food
+- Drink
+- Transportation
+- Shopping
+- Entertainment
+- Health
+- Education
+- Bills
+- Others
+
+**How It Works:**
+1. Upload multiple files via FormData (any combination of CSV/images/videos)
+2. CSV files are parsed immediately
+3. All media files (images/videos) are sent to GPT-4o Vision in one batch
+4. AI extracts and categorizes all transactions
+5. Results are combined and returned
+
+**Example Usage:**
+```typescript
+// Multiple files of different types
+const formData = new FormData()
+files.forEach((file, index) => {
+  formData.append(`file_${index}`, file)
+})
+
+const response = await fetch('/api/analyze-transactions', {
+  method: 'POST',
+  body: formData,
+})
+
+const result = await response.json()
+if (result.success) {
+  console.log(`Found ${result.count} transactions`)
+  result.transactions.forEach(t => {
+    console.log(`${t.item}: ${t.amount} (${t.category})`)
+  })
+}
+```
   ],
   total_spent: number,
   period: string // "September 2025"

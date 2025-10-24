@@ -96,32 +96,32 @@ export function BudgetInputForm({ onGenerate }: BudgetInputFormProps) {
           setProcessingStep(message)
         })
 
-        // Step 3: Parse manual transactions
-        let manualTrans: Transaction[] = []
-        if (manualTransactions.trim()) {
-          setProcessingStep('Processing manual transactions...')
-          const lines = manualTransactions.trim().split('\n')
-          manualTrans = lines.map(line => {
-            const parts = line.split(',').map(p => p.trim())
-            return {
-              item: parts[0] || 'Unknown',
-              amount: parseFloat(parts[1]) || 0,
-              category: parts[2] || 'Uncategorized',
-              date: parts[3] || new Date().toISOString().split('T')[0],
-            }
-          })
-        }
+        // [DEPRECATED] Step 3: Parse manual transactions
+        // let manualTrans: Transaction[] = []
+        // if (manualTransactions.trim()) {
+        //   setProcessingStep('Processing manual transactions...')
+        //   const lines = manualTransactions.trim().split('\n')
+        //   manualTrans = lines.map(line => {
+        //     const parts = line.split(',').map(p => p.trim())
+        //     return {
+        //       item: parts[0] || 'Unknown',
+        //       amount: parseFloat(parts[1]) || 0,
+        //       category: parts[2] || 'Uncategorized',
+        //       date: parts[3] || new Date().toISOString().split('T')[0],
+        //     }
+        //   })
+        // }
 
         // Combine all transactions
-        const allTransactions = [...extractedTransactions, ...manualTrans]
+        // const allTransactions = [...extractedTransactions]
 
-        if (allTransactions.length === 0) {
-          toast.error('No transactions found. Please check your data.')
-          setIsProcessing(false)
-          return
-        }
+        // if (extractedTransactions.length === 0) {
+        //   toast.error('No transactions found. Please check your data.')
+        //   setIsProcessing(false)
+        //   return
+        // }
 
-        // Step 4: Generate budget with AI streaming
+        // Step 3: Generate budget with AI streaming
         setProcessingStep('Generating budget with AI...')
         
         const chatHistory: ChatMessage[] = [
@@ -139,16 +139,13 @@ export function BudgetInputForm({ onGenerate }: BudgetInputFormProps) {
 
         await generateBudgetStream(
           {
-            transactions: allTransactions,
+            historyTransactions: extractedTransactions,
+            inputManual: manualTransactions.trim() || undefined,
             budgetType,
             startDate,
             endDate,
             estimatedExpense: estimatedExpense ? parseFloat(estimatedExpense) : undefined,
-            userProfile: profile ? {
-              name: profile.name || undefined,
-              job: profile.job || undefined,
-              financial_type: profile.financial_type || undefined,
-            } : undefined,
+            userProfile: profile
           },
           (_chunk) => {
             // Streaming chunk received (not displayed in UI)
@@ -197,16 +194,16 @@ export function BudgetInputForm({ onGenerate }: BudgetInputFormProps) {
       } else {
         // Only manual transactions
         setProcessingStep('Processing manual transactions...')
-        const lines = manualTransactions.trim().split('\n')
-        const transactions: Transaction[] = lines.map(line => {
-          const parts = line.split(',').map(p => p.trim())
-          return {
-            item: parts[0] || 'Unknown',
-            amount: parseFloat(parts[1]) || 0,
-            category: parts[2] || 'Uncategorized',
-            date: parts[3] || new Date().toISOString().split('T')[0],
-          }
-        })
+        // const lines = manualTransactions.trim().split('\n')
+        // const transactions: Transaction[] = lines.map(line => {
+        //   const parts = line.split(',').map(p => p.trim())
+        //   return {
+        //     item: parts[0] || 'Unknown',
+        //     amount: parseFloat(parts[1]) || 0,
+        //     category: parts[2] || 'Uncategorized',
+        //     date: parts[3] || new Date().toISOString().split('T')[0],
+        //   }
+        // })
 
         // Generate budget
         setProcessingStep('Generating budget with AI...')
@@ -226,16 +223,13 @@ export function BudgetInputForm({ onGenerate }: BudgetInputFormProps) {
 
         await generateBudgetStream(
           {
-            transactions,
+            historyTransactions: [],
+            inputManual: manualTransactions.trim(),
             budgetType,
             startDate,
             endDate,
             estimatedExpense: estimatedExpense ? parseFloat(estimatedExpense) : undefined,
-            userProfile: profile ? {
-              name: profile.name || undefined,
-              job: profile.job || undefined,
-              financial_type: profile.financial_type || undefined,
-            } : undefined,
+            userProfile: profile
           },
           (_chunk) => {
             // Streaming chunk received (not displayed in UI)
@@ -539,7 +533,7 @@ export function BudgetInputForm({ onGenerate }: BudgetInputFormProps) {
       {/* Summary before generate */}
       {(files.length > 0 || manualTransactions.trim()) && (
         <Card className="border-emerald-200 bg-emerald-50">
-          <CardContent className="pt-6">
+          <CardContent className="">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0">
                 <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center">
@@ -572,7 +566,7 @@ export function BudgetInputForm({ onGenerate }: BudgetInputFormProps) {
           size="lg"
           onClick={handleGenerate}
           disabled={isProcessing || (files.length === 0 && !manualTransactions.trim())}
-          className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed text-white"
         >
           {isProcessing ? (
             <>

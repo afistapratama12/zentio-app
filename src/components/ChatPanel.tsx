@@ -110,7 +110,7 @@ RULES:
 2. Berikan rekomendasi budget per kategori dalam format JSON
 3. Berikan penjelasan singkat kenapa budget tersebut direkomendasikan
 4. Pertimbangkan profil user (umur, pekerjaan, tipe keuangan)
-5. Total budget harus lebih rendah 10-20% dari total spending untuk mendorong saving
+5. Total budget harus lebih rendah 5-10% dari total spending untuk mendorong saving
 
 Format response:
 {

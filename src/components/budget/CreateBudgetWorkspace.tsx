@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { BudgetInputForm } from '../budget/BudgetInputForm'
 import { ChatSection } from '../budget/ChatSection'
 import { BudgetTableSection } from '../budget/BudgetTableSection'
-import { type ChatMessage, type BudgetItem } from '../../lib/ai-service'
+import { type ChatMessage, type BudgetItem, chatWithAI } from '../../lib/ai-service'
 import { type UploadedFile, uploadMultipleFiles } from '../../lib/file-upload'
 import { toast } from 'sonner'
 import { useBudgetSession, useUpdateBudgetSession } from '../../hooks/use-budget-session'
@@ -24,6 +24,7 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
   const [estimatedExpense, setEstimatedExpense] = useState<number | undefined>()
   const [sessionId, setSessionId] = useState<string>(existingSessionId || '')
   const [currentStatus, setCurrentStatus] = useState<'draft' | 'saved' | 'exported'>('draft')
+  const [isStreaming, setIsStreaming] = useState(false)
 
   // Load existing session if sessionId is provided
   const { data: existingSession, isLoading: sessionLoading } = useBudgetSession(existingSessionId || '')
@@ -62,6 +63,8 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
   }
 
   const handleSendMessage = async (message: string) => {
+    if (!message.trim() || isStreaming) return
+
     // Add user message to chat
     const userMessage: ChatMessage = {
       role: 'user',
@@ -70,19 +73,65 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
     }
     setChatHistory((prev) => [...prev, userMessage])
 
-    // TODO: Send to AI service and get response
-    // For now, just add a placeholder response
-    toast.info('Chat functionality will be implemented soon')
-    
-    // Placeholder AI response
-    setTimeout(() => {
-      const aiMessage: ChatMessage = {
-        role: 'assistant',
-        content: 'I received your message. Full chat functionality will be implemented soon.',
-        timestamp: new Date().toISOString(),
+    // Create placeholder for AI response
+    const aiMessageId = Date.now().toString()
+    const aiMessage: ChatMessage = {
+      role: 'assistant',
+      content: '',
+      timestamp: new Date().toISOString(),
+    }
+    setChatHistory((prev) => [...prev, aiMessage])
+
+    setIsStreaming(true)
+
+    try {
+      // Prepare messages for AI (excluding the empty AI message we just added)
+      const messagesToSend = [...chatHistory, userMessage]
+
+      let fullResponse = ''
+
+      // Call AI with streaming
+      await chatWithAI(
+        messagesToSend,
+        budget,
+        (chunk) => {
+          fullResponse += chunk
+          // Update the AI message in real-time
+          setChatHistory((prev) => {
+            const newHistory = [...prev]
+            const lastMessage = newHistory[newHistory.length - 1]
+            if (lastMessage.role === 'assistant') {
+              lastMessage.content = fullResponse
+            }
+            return newHistory
+          })
+        }
+      )
+
+      // Save updated chat history to session
+      if (sessionId) {
+        await updateSessionMutation.mutateAsync({
+          sessionId,
+          chatHistory: [...chatHistory, userMessage, { ...aiMessage, content: fullResponse }],
+        })
       }
-      setChatHistory((prev) => [...prev, aiMessage])
-    }, 500)
+    } catch (error: any) {
+      console.error('Error in chat:', error)
+      
+      // Update the last message with error
+      setChatHistory((prev) => {
+        const newHistory = [...prev]
+        const lastMessage = newHistory[newHistory.length - 1]
+        if (lastMessage.role === 'assistant') {
+          lastMessage.content = `Maaf, terjadi kesalahan: ${error.message || 'Tidak dapat terhubung ke AI'}. Silakan coba lagi.`
+        }
+        return newHistory
+      })
+      
+      toast.error('Gagal mengirim pesan')
+    } finally {
+      setIsStreaming(false)
+    }
   }
 
   const handleUploadFiles = async (files: File[]) => {
@@ -290,10 +339,10 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
             <ChatSection
               messages={chatHistory}
               files={uploadedFiles}
-              isStreaming={false}
+              isStreaming={isStreaming}
               onSendMessage={handleSendMessage}
               onUploadFiles={handleUploadFiles}
-              disabled={false}
+              disabled={isStreaming}
             />
           </div>
           <div className="lg:col-span-2">
@@ -324,10 +373,10 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
               <ChatSection
                 messages={chatHistory}
                 files={uploadedFiles}
-                isStreaming={false}
+                isStreaming={isStreaming}
                 onSendMessage={handleSendMessage}
                 onUploadFiles={handleUploadFiles}
-                disabled={false}
+                disabled={isStreaming}
               />
             </TabsContent>
             <TabsContent value="budget" className="flex-1 mt-4">

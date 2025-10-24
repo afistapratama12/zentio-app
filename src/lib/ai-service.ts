@@ -1,7 +1,8 @@
+import { UserProfile } from '@/types'
 import type { UploadedFile } from './file-upload'
 import { parseCSV } from './file-upload'
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY
+const OPENAI_API_KEY = process.env.NEXT_PUBLIC_OPENAI_API_KEY
 
 export interface Transaction {
   item: string
@@ -24,16 +25,13 @@ export interface ChatMessage {
 }
 
 export interface BudgetGenerationParams {
-  transactions: Transaction[]
+  historyTransactions: Transaction[]
+  inputManual?: string
   budgetType: '1-month' | '1-year' | 'custom'
   startDate: string
   endDate: string
   estimatedExpense?: number
-  userProfile?: {
-    name?: string
-    job?: string
-    financial_type?: string
-  }
+  userProfile?: UserProfile
 }
 
 export interface BudgetGenerationResult {
@@ -45,53 +43,72 @@ export interface BudgetGenerationResult {
 
 /**
  * Analyze uploaded files and extract transactions
+ * Now supports multiple files in a single API call
  */
 export async function analyzeFiles(
   files: UploadedFile[],
   onProgress?: (message: string) => void
 ): Promise<Transaction[]> {
-  const allTransactions: Transaction[] = []
+  if (files.length === 0) return []
 
-  for (const file of files) {
+  try {
     if (onProgress) {
-      onProgress(`Analyzing ${file.name}...`)
+      onProgress(`Analyzing ${files.length} file(s)...`)
     }
 
-    try {
-      if (file.type === 'csv') {
-        // Parse CSV directly
-        const response = await fetch(file.url)
-        const blob = await response.blob()
-        const csvFile = new File([blob], file.name, { type: 'text/csv' })
-        const data = await parseCSV(csvFile)
-        
-        // Convert CSV data to transactions
-        const transactions = data.map((row: any) => ({
-          item: row.item || row.description || row.name || 'Unknown',
-          amount: parseFloat(row.amount || row.price || row.total || 0),
-          category: row.category || 'Uncategorized',
-          date: row.date || new Date().toISOString().split('T')[0],
-        }))
-
-        allTransactions.push(...transactions)
-      } else if (file.type === 'image') {
-        // Analyze image using OpenAI Vision
-        const transactions = await analyzeImageWithAI(file.url)
-        allTransactions.push(...transactions)
-      } else if (file.type === 'video') {
-        // Extract frames and analyze
-        const transactions = await analyzeVideoWithAI(file.url)
-        allTransactions.push(...transactions)
-      }
-    } catch (error) {
-      console.error(`Error analyzing ${file.name}:`, error)
+    // Create FormData with all files
+    const formData = new FormData()
+    
+    for (const file of files) {
       if (onProgress) {
-        onProgress(`⚠️ Failed to analyze ${file.name}`)
+        onProgress(`Preparing ${file.name}...`)
       }
-    }
-  }
 
-  return allTransactions
+      // Fetch the file from URL and convert to File object
+      const response = await fetch(file.url)
+      const blob = await response.blob()
+      const fileObj = new File([blob], file.name, { 
+        type: file.type === 'csv' ? 'text/csv' : 
+              file.type === 'image' ? 'image/jpeg' : 
+              'video/mp4' 
+      })
+      
+      // Add to FormData with unique key
+      formData.append(`file_${files.indexOf(file)}`, fileObj)
+    }
+
+    if (onProgress) {
+      onProgress('Sending to AI for analysis...')
+    }
+
+    // Call API endpoint
+    const apiResponse = await fetch('/api/analyze-transactions', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!apiResponse.ok) {
+      throw new Error(`API error: ${apiResponse.statusText}`)
+    }
+
+    const result = await apiResponse.json()
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to analyze files')
+    }
+
+    if (onProgress) {
+      onProgress(`✅ Found ${result.count} transaction(s)`)
+    }
+
+    return result.transactions || []
+  } catch (error) {
+    console.error('Error analyzing files:', error)
+    if (onProgress) {
+      onProgress(`⚠️ Failed to analyze files: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+    throw error
+  }
 }
 
 /**
@@ -204,13 +221,8 @@ export async function generateBudgetStream(
   onComplete: (result: BudgetGenerationResult) => void
 ): Promise<void> {
   try {
-    // Calculate period
-    const start = new Date(params.startDate)
-    const end = new Date(params.endDate)
-    const months = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 30))
-
     // Build prompt
-    const prompt = buildBudgetPrompt(params, months)
+    const prompt = buildBudgetPrompt(params)
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -219,7 +231,7 @@ export async function generateBudgetStream(
         'Authorization': `Bearer ${OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'gpt-4.1-2025-04-14',
         messages: [
           {
             role: 'system',
@@ -232,7 +244,7 @@ export async function generateBudgetStream(
         ],
         stream: true,
         max_tokens: 2000,
-        temperature: 0.7,
+        temperature: 0.5,
       }),
     })
 
@@ -287,57 +299,95 @@ export async function generateBudgetStream(
   }
 }
 
-function buildBudgetPrompt(params: BudgetGenerationParams, months: number): string {
-  const { transactions, budgetType, estimatedExpense, userProfile } = params
+export interface SpendingByCategory {
+  items: string[]
+  total: number
+}
 
-  let prompt = `Saya memiliki data transaksi berikut:\n\n`
-  
+function buildBudgetPrompt(params: BudgetGenerationParams): string {
+  const { historyTransactions, inputManual, budgetType, estimatedExpense, userProfile } = params
+
+  let month = 1
+  let interval = ""
+  switch (budgetType) {
+    case '1-month':
+      month = 1
+      interval = "bulanan"
+    case '1-year':
+      month = 12
+      interval = "tahunan"
+    default:
+      const start = new Date(params.startDate)
+      const end = new Date(params.endDate)
+      month = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 30))
+      interval = `${month}-bulan`
+  }
+
   // Add transaction summary
-  const totalSpent = transactions.reduce((sum, t) => sum + t.amount, 0)
-  const categories = [...new Set(transactions.map(t => t.category))]
-  
-  prompt += `Total transaksi: ${transactions.length}\n`
-  prompt += `Total pengeluaran: Rp ${totalSpent.toLocaleString('id-ID')}\n`
-  prompt += `Kategori yang ada: ${categories.join(', ')}\n\n`
+  const totalSpent = historyTransactions.reduce((sum, t) => sum + t.amount, 0)
+  const categories = [...new Set(historyTransactions.map(t => t.category))]
 
-  // Add user context if available
-  if (userProfile) {
-    prompt += `Profil user:\n`
-    if (userProfile.name) prompt += `- Nama: ${userProfile.name}\n`
-    if (userProfile.job) prompt += `- Pekerjaan: ${userProfile.job}\n`
-    if (userProfile.financial_type) prompt += `- Tipe keuangan: ${userProfile.financial_type}\n`
-    prompt += `\n`
+  const spendingByCategory: Record<string, SpendingByCategory> = {}
+
+  for (const t of historyTransactions) {
+    if (!spendingByCategory[t.category]) {
+      spendingByCategory[t.category] = { items: [], total: 0 }
+    }
+
+    spendingByCategory[t.category].items.push(t.item)
+    spendingByCategory[t.category].total += t.amount
   }
 
-  // Add budget requirement
-  prompt += `Tolong buatkan budget planning untuk periode ${months} bulan kedepan (${budgetType}).\n`
-  
-  if (estimatedExpense) {
-    prompt += `Estimasi pengeluaran maksimal: Rp ${estimatedExpense.toLocaleString('id-ID')}\n`
-  }
+  let prompt = `Saya memiliki data transaksi di periode sebelumnya, sebagai berikut:
+ 
+Data transaksi yang sudah dianalisis:
+Total Transaksi: ${historyTransactions.length}
+Total Pengeluaran: Rp ${totalSpent.toLocaleString('id-ID')}
+Kategori yang ada: ${categories.join(', ')}
 
-  prompt += `\n**PENTING: Response HARUS dalam format JSON yang valid, tidak ada teks tambahan sebelum atau sesudah JSON.**\n\n`
-  prompt += `Format JSON yang diharapkan:\n`
-  prompt += `\`\`\`json\n`
-  prompt += `{\n`
-  prompt += `  "explanation": "penjelasan singkat tentang budget ini (string)",\n`
-  prompt += `  "budget": [\n`
-  prompt += `    {\n`
-  prompt += `      "category": "Nama Kategori",\n`
-  prompt += `      "amount": 1000000,\n`
-  prompt += `      "percentage": 20.5,\n`
-  prompt += `      "notes": "catatan opsional"\n`
-  prompt += `    }\n`
-  prompt += `  ],\n`
-  prompt += `  "savingsTarget": 500000,\n`
-  prompt += `  "insights": ["insight 1", "insight 2", "insight 3"]\n`
-  prompt += `}\n`
-  prompt += `\`\`\`\n\n`
-  prompt += `Pastikan:\n`
-  prompt += `- Total budget tidak melebihi estimasi pengeluaran\n`
-  prompt += `- Semua amount adalah angka bulat\n`
-  prompt += `- Percentage adalah angka desimal (total harus 100)\n`
-  prompt += `- Response hanya berisi JSON, tidak ada teks lain\n`
+Dengan rincian sebagai berikut:
+${spendingByCategory ? Object.entries(spendingByCategory).map(([category, data]) => {
+  return `- ${category}:\n  - Items: ${data.items.join(', ')}\n  - Total: Rp ${data.total.toLocaleString('id-ID')}`
+}).join('\n') : ''}
+
+${inputManual ? "Dan ini ada catatan pengeluaran yang dicatat oleh user: \n" + inputManual : ''}
+
+Berikut juga ada profile user yang bisa digunakan untuk referensi dalam pembuatan budget:
+- Nama: ${userProfile?.name || 'N/A'}
+- Umur: ${userProfile?.age || 'N/A'}
+- Pekerjaan: ${userProfile?.job || 'N/A'}
+- Status Pernikahan: ${userProfile?.marital_status || 'N/A'}
+- Tipe keuangan: ${userProfile?.financial_type || 'N/A'}
+- Investment Level: ${userProfile?.investment_level || 'N/A'}
+
+Buatkan budget planning untuk periode ${month} bulan kedepan (${interval}) berdasarkan informasi yang sudah saya berikan.
+${estimatedExpense ? `Estimasi pengeluaran maksimal: Rp ${estimatedExpense.toLocaleString('id-ID')}` : ''}
+
+PENTING: Response HANYA dalam format JSON yang valid, tidak ada teks tambahan sebelum atau sesudah JSON.
+format JSON yang diharapkan:
+
+{
+  "explanation": "penjelasan singkat tentang budget ini (string)",
+  "budget": [
+    {
+      "category": "Nama Kategori",
+      "amount": 1000000,
+      "percentage": 20.5,
+      "notes": "catatan opsional"
+    }
+  ],
+  "savingsTarget": number_savings_target,
+  "insights": ["insight 1", "insight 2", "insight 3"]
+}
+
+Pastikan:
+- Total budget tidak melebihi estimasi pengeluaran
+- Semua amount adalah angka bulat
+- Kalkukasi amount harus memiliki pembulatan seribu keatas, misal 106000, tidak boleh 105511
+- Percentage adalah angka desimal (total harus 100)
+- Berikan 'notes' dengan tujuan untuk mengoptimalkan pengeluaran di setiap kategori
+- Response hanya berisi JSON, tidak ada teks lain
+`
 
   return prompt
 }
@@ -425,7 +475,7 @@ export async function getEditFeedback(
     
     const prompt = `User telah melakukan perubahan pada budget:\n\n${changes}\n\n`
       + (userMessage ? `Pesan user: "${userMessage}"\n\n` : '')
-      + `Berikan feedback singkat (maksimal 3 kalimat) tentang perubahan ini. Apakah reasonable? Ada saran?`
+      + `Berikan feedback yang detail dan to the point tentang perubahan ini. Apakah reasonable? Ada saran?`
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -434,7 +484,7 @@ export async function getEditFeedback(
         'Authorization': `Bearer ${OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'gpt-4.1-2025-04-14',
         messages: [
           {
             role: 'system',
@@ -445,8 +495,8 @@ export async function getEditFeedback(
             content: prompt
           }
         ],
-        max_tokens: 300,
-        temperature: 0.8,
+        max_tokens: 2000,
+        temperature: 0.5,
       }),
     })
 
@@ -481,4 +531,126 @@ function detectChanges(original: BudgetItem[], edited: BudgetItem[]): string {
   }
 
   return changes.join('\n') || 'Tidak ada perubahan signifikan'
+}
+
+/**
+ * Chat with AI about budget - supports streaming
+ */
+export async function chatWithAI(
+  messages: ChatMessage[],
+  currentBudget: BudgetItem[],
+  onChunk?: (chunk: string) => void
+): Promise<string> {
+  try {
+    // Build context from current budget
+    const budgetContext = currentBudget.length > 0
+      ? `\n\nCurrent Budget:\n${currentBudget.map(item => 
+          `- ${item.category}: Rp ${item.amount.toLocaleString('id-ID')} (${item.percentage.toFixed(1)}%)`
+        ).join('\n')}\n\nTotal: Rp ${currentBudget.reduce((sum, item) => sum + item.amount, 0).toLocaleString('id-ID')}`
+      : ''
+
+    const systemMessage = {
+      role: 'system' as const,
+      content: `You are Zentio AI, an expert financial advisor for Indonesian users. Your role is to:
+- Help users refine and optimize their budget
+- Answer questions about financial planning
+- Provide actionable advice in Indonesian language
+- Be friendly, supportive, and concise
+${budgetContext}`
+    }
+
+    const apiMessages = [
+      systemMessage,
+      ...messages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }))
+    ]
+
+    if (onChunk) {
+      // Streaming mode
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4.1-2025-04-14',
+          messages: apiMessages,
+          stream: true,
+          max_tokens: 2000,
+          temperature: 0.5,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.statusText}`)
+      }
+
+      const reader = response.body?.getReader()
+      if (!reader) {
+        throw new Error('No response body')
+      }
+
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let fullResponse = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
+
+        for (const line of lines) {
+          if (line.trim() === '' || line.trim() === 'data: [DONE]') continue
+          
+          if (line.startsWith('data: ')) {
+            try {
+              const json = JSON.parse(line.slice(6))
+              const content = json.choices[0]?.delta?.content
+              
+              if (content) {
+                fullResponse += content
+                onChunk(content)
+              }
+            } catch (e) {
+              // Skip invalid JSON
+            }
+          }
+        }
+      }
+
+      return fullResponse
+    } else {
+      // Non-streaming mode
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4.1-2025-04-14',
+          messages: apiMessages,
+          max_tokens: 2000,
+          temperature: 0.5,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      return data.choices[0].message.content
+    }
+  } catch (error) {
+    console.error('Error chatting with AI:', error)
+    throw new Error('Gagal berkomunikasi dengan AI. Silakan coba lagi.')
+  }
 }
