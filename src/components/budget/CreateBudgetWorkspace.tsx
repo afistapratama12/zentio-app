@@ -12,6 +12,7 @@ import { useBudgetSession, useUpdateBudgetSession } from '../../hooks/use-budget
 import { Loader2 } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { useRouter } from 'next/navigation'
+import { sanitizeAIJson } from '@/lib/cleaner'
 
 interface CreateBudgetWorkspaceProps {
   sessionId?: string
@@ -32,6 +33,9 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
   const [sessionId, setSessionId] = useState<string>(existingSessionId || '')
   const [currentStatus, setCurrentStatus] = useState<'draft' | 'saved' | 'exported' | 'on-edit'>('draft')
   const [isStreaming, setIsStreaming] = useState(false)
+  const [previousBudget, setPreviousBudget] = useState<BudgetItem[]>([]) // Backup budget before AI changes
+  const [hasPendingBudgetChange, setHasPendingBudgetChange] = useState(false)
+  const [loadingOverlayBudget, setLoadingOverlayBudget] = useState(false)
 
   // Load existing session if sessionId is provided
   const { data: existingSession, isLoading: sessionLoading } = useBudgetSession(existingSessionId || '')
@@ -75,6 +79,8 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
     setFirstPrompt(data.firstPrompt)
     setShowWorkspace(true)
   }
+
+  console.log("budget:", budget)
 
   const handleSendMessage = async (message: string) => {
     if (!message.trim() || isStreaming) return
@@ -134,6 +140,15 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
       const messagesToSend = [...chatHistory, userMessage]
 
       let fullResponse = ''
+      let currentTextResponse = ''
+
+      let changeBudgetOn = false
+      let afterChangeBudget = false
+      let hasDoneCleanFirstPart = false
+
+      let firstParts: {type: 'text', content: string} = {type: 'text', content: '' }
+      let secondParts: {type: 'budget-change', content: string} = {type: 'budget-change', content: '' }
+      let thirdParts: {type: 'text', content: string} = {type: 'text', content: '' }
 
       // Call AI with streaming
       await chatWithAI(
@@ -142,23 +157,94 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
         firstPrompt,
         (chunk) => {
           fullResponse += chunk
+          currentTextResponse += chunk
+
+          if (currentTextResponse.includes('--end-budget-change--')) {
+            changeBudgetOn = false
+            afterChangeBudget = true
+            currentTextResponse = ''
+          }
+
+          // active when --start-b is found
+          if (changeBudgetOn) {
+            if (!hasDoneCleanFirstPart) {
+              firstParts.content = firstParts.content.replace('\n--start-budget', '')
+              firstParts.content = firstParts.content.replace('--start-budget', '')
+              hasDoneCleanFirstPart = true
+            }
+            secondParts.content += chunk
+          }
+
+          // active after budget change part
+          if (!changeBudgetOn && afterChangeBudget) {
+            thirdParts.content += chunk
+          }
+
+          // active before budget change part
+          if (!changeBudgetOn && !afterChangeBudget) {
+            firstParts.content += chunk
+          }
+
+          if (currentTextResponse.includes('--start-budget')) {
+            setHasPendingBudgetChange((prev) => !prev)
+            setLoadingOverlayBudget(true)
+            setPreviousBudget(() => [...budget]) // Backup current budget
+            changeBudgetOn = true
+            currentTextResponse = ''
+          }
+
           // Update the AI message in real-time
           setChatHistory((prev) => {
             const newHistory = [...prev]
             const lastMessage = newHistory[newHistory.length - 1]
             if (lastMessage.role === 'assistant') {
-              lastMessage.content = fullResponse
+              if (!afterChangeBudget && !changeBudgetOn) {
+                lastMessage.content = fullResponse
+              } else {
+                if (thirdParts.content.length == 0) {
+                  lastMessage.content = [firstParts, secondParts]
+                } else {
+                  lastMessage.content = [firstParts, secondParts, thirdParts]
+                }
+
+                lastMessage.full_content = fullResponse
+              }
             }
             return newHistory
           })
         }
       )
 
+      // set new budget if changed
+      // parsing object in fullResponse string in the middle of --start-budget-change-- and --end-budget-change--
+      const budgetChangeMatch = fullResponse.match(/--start-budget-change--([\s\S]*?)--end-budget-change--/)
+      if (budgetChangeMatch) {
+        const budgetJsonString = budgetChangeMatch[1].trim()
+        console.log("matched budget change json:", budgetChangeMatch[1])
+        try {
+          const newBudget: BudgetItem[] = JSON.parse(sanitizeAIJson(budgetJsonString))
+          setBudget(newBudget)
+        } catch (error) {
+          console.error('Error parsing budget change JSON:', error)
+          toast.error('Failed to parse budget changes from AI response')
+        }
+      }
+      
+      setLoadingOverlayBudget(false)
+      
       // Save updated chat history to session
       if (sessionId) {
         await updateSessionMutation.mutateAsync({
           sessionId,
-          chatHistory: [...chatHistory, userMessage, { ...aiMessage, content: fullResponse }],
+          chatHistory: [
+            ...chatHistory, 
+            userMessage, 
+            (!changeBudgetOn && !afterChangeBudget) ? { ...aiMessage, content: fullResponse } : {
+              ...aiMessage,
+              content: thirdParts.content.length == 0 ? [firstParts, secondParts] : [firstParts, secondParts, thirdParts],
+              full_content: fullResponse
+            }
+          ],
         })
       }
     } catch (error: any) {
@@ -182,29 +268,6 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
 
   const handleUploadFiles = async (files: File[]) => {
     setPendingUploadedFiles((prev) => [...prev, ...files])
-
-    // TODO: delete soon
-    // try {
-      // toast.info('Uploading files...')
-      // We need userId for upload - will get it from auth context
-      // For now, use a placeholder
-      // Add image blob to message chat AI
-      // const uploaded = await uploadMultipleFiles(files, user?.id || '', sessionId)
-
-
-      // toast.success(`${uploaded.length} file(s) uploaded successfully`)
-      
-
-      // const fileNames = uploaded.map((f) => f.name).join(', ')
-      // const message: ChatMessage = {
-      //   role: 'user',
-      //   content: `Uploaded additional files: ${fileNames}`,
-      //   timestamp: new Date().toISOString(),
-      // }
-      // setChatHistory((prev) => [...prev, message])
-    // } catch (error: any) {
-    //   toast.error(error.message || 'Failed to upload files')
-    // }
   }
 
   const handleSave = async () => {
@@ -229,6 +292,41 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
       console.error('Error saving budget:', error)
       toast.error('Failed to save budget')
     }
+  }
+
+  const handleApplyBudgetChange = async () => {
+    if (!sessionId) {
+      toast.error('No session found')
+      return
+    }
+
+    try {
+      // Save the new budget to database
+      await updateSessionMutation.mutateAsync({
+        sessionId,
+        budget,
+        chatHistory,
+        uploadedFiles,
+        status: 'saved',
+      })
+      
+      setCurrentStatus('saved')
+      setHasPendingBudgetChange(false)
+      setHasEdited(false)
+      setPreviousBudget([]) // Clear backup
+      toast.success('Budget berhasil disimpan!')
+    } catch (error: any) {
+      console.error('Error applying budget change:', error)
+      toast.error('Gagal menyimpan perubahan budget')
+    }
+  }
+
+  const handleRejectBudgetChange = () => {
+    // Restore previous budget
+    setBudget([...previousBudget])
+    setHasPendingBudgetChange(false)
+    setPreviousBudget([])
+    toast.info('Perubahan budget dibatalkan')
   }
 
   const handleOnEdit = async () => {
@@ -417,6 +515,9 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
               onSendMessage={handleSendMessage}
               onUploadFiles={handleUploadFiles}
               disabled={isStreaming}
+              hasPendingBudgetChange={hasPendingBudgetChange}
+              onApplyBudgetChange={handleApplyBudgetChange}
+              onRejectBudgetChange={handleRejectBudgetChange}
             />
           </div>
           <div className="lg:col-span-2">
@@ -432,6 +533,7 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
               onSave={handleSave}
               onExport={handleExport}
               isProcessing={updateSessionMutation.isPending}
+              loadingOverlay={loadingOverlayBudget}
             />
           </div>
         </div>
@@ -451,6 +553,9 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
                 onSendMessage={handleSendMessage}
                 onUploadFiles={handleUploadFiles}
                 disabled={isStreaming}
+                hasPendingBudgetChange={hasPendingBudgetChange}
+                onApplyBudgetChange={handleApplyBudgetChange}
+                onRejectBudgetChange={handleRejectBudgetChange}
               />
             </TabsContent>
             <TabsContent value="budget" className="flex-1 mt-4">

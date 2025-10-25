@@ -21,6 +21,7 @@ export interface BudgetItem {
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system'
   content: string | Array<Record<string, any>>
+  full_content?: string
   timestamp: string
 }
 
@@ -576,6 +577,9 @@ export async function chatWithAI(
     awalan: --start-budget-change--
     end: --end-budget-change--
 
+   * PENTING: Hanya kirim SATU budget change per response.
+   * Jika mengubah budget, kirim SELURUH budget array (semua kategori), bukan hanya yang berubah.
+   * 
    * format budget change harus sama seperti sebelumnya:
    * [{ 
    *    "category": "Nama Kategori",
@@ -592,6 +596,11 @@ export async function chatWithAI(
    *   "amount": 1500000,
    *   "percentage": 25.0,
    *  "notes": "Mengalokasikan lebih banyak untuk makanan sesuai permintaan."
+   * }, {
+   *    "category": "Transport",
+   *    "amount": 800000,
+   *    "percentage": 13.3,
+   *    "notes": "Tetap seperti sebelumnya"
    * }]
    * --end-budget-change--
    * 
@@ -608,16 +617,16 @@ export async function chatWithAI(
 
     const systemMessage = {
       role: 'system' as const,
-      content: `You are Zentio AI, an expert financial advisor for Indonesian users.  
+      content: `You are Zentio AI, an expert financial advisor for Indonesian users.
 
 Your role and responsibilities:
-- Help users refine, optimize, and manage their budget.  
+- Help users refine, optimize, and manage their budget plan.  
 - Answer questions about financial planning in general.  
 - Provide actionable advice on budgeting, investments, savings, insurance, and other financial topics.  
 - Modify the budget structure only if the user explicitly requests changes, or when suggesting clear optimizations.  
 - Always respond in a friendly, supportive, and simple Indonesian language that is easy to understand.  
 
-When making changes to the budget structure:
+If there is a request to change the budget or you feel the need to change the budget based on user complain, then:
 - Always mark the changes between:
   --start-budget-change--
   [...valid JSON...]
@@ -630,9 +639,19 @@ When making changes to the budget structure:
     "notes": "optional notes"
   }]
 - Never use any other format except valid JSON inside the markers.
+- IMPORTANT: Only send ONE marker with full budget change per response.
+- When sending a budget change, send the COMPLETE budget array (all categories), not just the changed items.
 
 Current budget (if available): 
 ${budgetContext !== '' ? budgetContext : 'No budget data available.'}`
+    }
+
+    // clean up firstPrompt without rule
+    if (firstPrompt && typeof firstPrompt.content === 'string') {
+      const contentWIthRule = firstPrompt.content.split('PENTING: Response HANYA dalam format JSON yang valid')
+      if (contentWIthRule.length > 1) {
+        firstPrompt.content = contentWIthRule[0].trim()
+      }
     }
 
     const apiMessages = [
@@ -641,10 +660,28 @@ ${budgetContext !== '' ? budgetContext : 'No budget data available.'}`
         role: 'user' as const,
         content: firstPrompt.content
       }] : []),
-      ...messagesToSend.map(msg => ({
-        role: msg.role,
-        content: msg.content
-      }))
+      ...messagesToSend
+        .filter((msg: any) => msg.role !== 'system')
+        .map((msg) => {
+          if (msg.role !== 'assistant') {
+            return {
+              role: msg.role,
+              content: msg.content
+            }
+          }
+
+          if (msg.role === 'assistant' && typeof msg.content === 'string') {
+            return {
+              role: msg.role,
+              content: msg.content
+            }
+          } 
+            
+          return {
+            role: msg.role,
+            content: msg.full_content || ''
+          }
+        })
     ]
 
     if (onChunk) {

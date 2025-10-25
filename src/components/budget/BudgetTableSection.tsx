@@ -19,6 +19,7 @@ interface BudgetTableSectionProps {
   canRequestFeedback?: boolean // Deprecated: Feedback is now always available when edited
   isProcessing?: boolean
   readOnly?: boolean
+  loadingOverlay?: boolean
 }
 
 export function BudgetTableSection({
@@ -31,6 +32,7 @@ export function BudgetTableSection({
   hasEdited,
   isProcessing = false,
   readOnly = false,
+  loadingOverlay = false,
 }: BudgetTableSectionProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
 
@@ -104,7 +106,24 @@ export function BudgetTableSection({
   }
 
   return (
-    <Card className="flex flex-col h-full">
+    <Card className={cn("flex flex-col h-full relative")}>
+      {/* Loading Overlay */}
+      {loadingOverlay && (
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center rounded-lg">
+          <div className="flex flex-col items-center gap-4">
+            <div className="relative">
+              <Loader2 className="w-12 h-12 animate-spin text-emerald-600" />
+              <div className="absolute inset-0 w-12 h-12 rounded-full border-4 border-emerald-100 border-t-transparent animate-spin" 
+                   style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-medium text-gray-900">Processing your budget...</p>
+              <p className="text-xs text-gray-500 mt-1">AI is analyzing and updating the data</p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <CardHeader className="border-b">
         <div className="flex items-center justify-between">
           <CardTitle>Budget Plan</CardTitle>

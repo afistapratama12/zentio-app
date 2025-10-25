@@ -11,6 +11,9 @@ import {
   FileText,
   Image as ImageIcon,
   Video,
+  Check,
+  X,
+  PencilRulerIcon,
 } from "lucide-react";
 import { type ChatMessage } from "../../lib/ai-service";
 import { formatFileSize, type UploadedFile } from "../../lib/file-upload";
@@ -24,6 +27,9 @@ interface ChatSectionProps {
   streamingMessage?: string;
   files?: UploadedFile[];
   disabled?: boolean;
+  hasPendingBudgetChange?: boolean;
+  onApplyBudgetChange?: () => void;
+  onRejectBudgetChange?: () => void;
 }
 
 export function ChatSection({
@@ -34,6 +40,9 @@ export function ChatSection({
   streamingMessage = "",
   files = [],
   disabled = false,
+  hasPendingBudgetChange = false,
+  onApplyBudgetChange,
+  onRejectBudgetChange,
 }: ChatSectionProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -112,14 +121,44 @@ export function ChatSection({
             {messages.map((message, index) => {
               const attachedFiles =
                 (typeof message.content !== "string" &&
-                  message.content.filter((c: any) => c.type !== "text")) ||
+                  Array.isArray(message.content) &&
+                  message.content.filter((c: any) => c.type === "image_url")) ||
                 [];
 
-              const messageText =
-                typeof message.content === "string"
-                  ? message.content
-                  : message.content.find((c: any) => c.type === "text")?.text ||
-                    "";
+              // Handle content - could be string, array of content parts, or array of {type, content}
+              let contentParts: Array<{ type: 'text' | 'budget-change'; content: string }> = []
+
+              const isLastIndex = index === messages.length - 1;
+
+              if (typeof message.content === "string") {
+                contentParts.push({ type: 'text', content: message.content })
+              } else {
+                if (message.role === 'user') {
+                  // get rirst text
+                  const messageText = message.content[0]
+                  contentParts.push({
+                    type: 'text',
+                    content: messageText.text,
+                  })
+                } else {
+                  contentParts = message.content as Array<{ type: 'text' | 'budget-change'; content: string }>
+  
+                  // remove \n in first text in last part
+                  if (contentParts.length == 3) {
+                    const lastPart = contentParts[2]
+                    if (lastPart.type === 'text') {
+                      if (lastPart.content.startsWith('\n\n')) {
+                        lastPart.content = lastPart.content.slice(2)
+                      } else if (lastPart.content.startsWith('\n')) {
+                        lastPart.content = lastPart.content.slice(1)
+                      }
+                    }
+  
+                    contentParts[2] = lastPart
+                  } 
+                }
+              }
+
               return (
                 <div
                   key={index}
@@ -165,24 +204,78 @@ export function ChatSection({
                           : "bg-gray-100 text-gray-900"
                       )}
                     >
-                      <div className="text-sm whitespace-pre-wrap break-words">
-                        {messageText}
-                      </div>
                       { attachedFiles.length > 0 && (
-                        <div className="flex mt-2 gap-2 justify-start flex-wrap">
+                        <div className="flex flex-wrap mb-4 gap-2 justify-start flex-wrap">
                           {
                             attachedFiles.map((file: Record<string, any>, fileIdx: number) => (
                               <div
                                 key={fileIdx}
-                                className="flex flex-col items-center text-xs text-gray-600 bg-gray-50 rounded px-2 py-1.5"
+                                className="w-1/4 flex items-center gap-2 text-xs text-gray-600 bg-gray-50 rounded p-2"
                               >
-                                {getFileIcon(file.type)}
+                                <div>
+                                  {getFileIcon(file.image_url.type)}
+                                </div>
                                 <span className="max-w-[80px] truncate font-medium">
-                                  {file.filename}
+                                  {file.image_url.filename}
                                 </span>
                               </div>
                             ))
                           }
+                        </div>
+                      )}
+
+                      {message.role === "assistant" ? (
+                        <div className="space-y-4">
+                          {contentParts.map((part, partIdx) => (
+                            <div key={partIdx}>
+                              {part.type === "text" ? (
+                                <div className="text-sm whitespace-pre-wrap break-words">
+                                  {part.content}
+                                </div>
+                              ) : (
+                                <div className="flex flex-col items-start gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled
+                                    className="cursor-default bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                                  >
+                                    <PencilRulerIcon className="w-3 h-3 mr-2" /> 
+                                    <span>Change budget</span>
+                                  </Button>
+                                  
+                                  {hasPendingBudgetChange && isLastIndex && onApplyBudgetChange && onRejectBudgetChange && (
+                                    <div className="flex gap-2">
+                                      <Button
+                                        variant="default"
+                                        size="sm"
+                                        onClick={onApplyBudgetChange}
+                                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                      >
+                                        <Check className="w-4 h-4 mr-1" />
+                                        Apply
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={onRejectBudgetChange}
+                                        className="border-red-300 text-red-600 hover:bg-red-50"
+                                      >
+                                        <X className="w-4 h-4 mr-1" />
+                                        Reject
+                                      </Button>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-sm whitespace-pre-wrap break-words">
+                          {contentParts.length > 0 && contentParts[0].type === 'text' 
+                            ? contentParts[0].content 
+                            : ''}
                         </div>
                       )}
                       {message.timestamp && (
@@ -294,7 +387,7 @@ export function ChatSection({
                   multiple
                   accept=".csv,image/*,video/*"
                   onChange={handleFileSelect}
-                  disabled={disabled}
+                  disabled={disabled || isStreaming || hasPendingBudgetChange}
                 />
 
                 {onUploadFiles && (
@@ -303,7 +396,7 @@ export function ChatSection({
                     variant="outline"
                     size="icon"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={disabled}
+                    disabled={disabled || isStreaming || hasPendingBudgetChange}
                     title="Attach files"
                     className="hover:cursor-pointer"
                   >
@@ -318,14 +411,14 @@ export function ChatSection({
                       ? "Please generate budget first..."
                       : "Ask me anything about your budget..."
                   }
-                  disabled={disabled || isStreaming}
+                  disabled={disabled || isStreaming || hasPendingBudgetChange}
                   className="flex-1"
                 />
 
                 <Button
                   type="submit"
                   size="icon"
-                  disabled={disabled || isStreaming}
+                  disabled={disabled || isStreaming || hasPendingBudgetChange}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white"
                 >
                   {isStreaming ? (
