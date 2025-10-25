@@ -58,7 +58,7 @@ interface UpdateBudgetSessionParams {
   uploadedFiles?: UploadedFile[]
   editCount?: number
   lastAiFeedback?: string
-  status?: 'draft' | 'saved' | 'exported'
+  status?: 'draft' | 'saved' | 'exported' | 'on-edit'
 }
 
 // Create new budget session

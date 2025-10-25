@@ -27,9 +27,10 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
   const [budget, setBudget] = useState<BudgetItem[]>([])
   const [hasEdited, setHasEdited] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
+  const [pendingUploadedFiles, setPendingUploadedFiles] = useState<File[]>([])
   const [estimatedExpense, setEstimatedExpense] = useState<number | undefined>()
   const [sessionId, setSessionId] = useState<string>(existingSessionId || '')
-  const [currentStatus, setCurrentStatus] = useState<'draft' | 'saved' | 'exported'>('draft')
+  const [currentStatus, setCurrentStatus] = useState<'draft' | 'saved' | 'exported' | 'on-edit'>('draft')
   const [isStreaming, setIsStreaming] = useState(false)
 
   // Load existing session if sessionId is provided
@@ -78,10 +79,41 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
   const handleSendMessage = async (message: string) => {
     if (!message.trim() || isStreaming) return
 
+    const messageMedia: Array<{
+      type: 'image_url'; image_url: { url: string, filename?: string, type?: string }
+    }> = []
+
+    if (pendingUploadedFiles) {
+      // process upload files
+      const uploaded = await uploadMultipleFiles(pendingUploadedFiles, user?.id || '', sessionId)
+      
+      // add to uploaded files state and store to database later
+      setUploadedFiles((prev) => [...prev, ...uploaded])
+      
+      // add to message media
+      for (const file of pendingUploadedFiles) {
+        const arrayBuffer = await file.arrayBuffer()
+        const base64 = Buffer.from(arrayBuffer).toString('base64')
+        messageMedia.push({
+          type: 'image_url',
+          image_url: {
+            url: `data:${file.type};base64,${base64}`,
+            filename: file.name,
+            type: file.type,
+          },
+        })
+      }
+    }
+
+    const mssageContent = [
+      { type: 'text', text: message },
+      ...messageMedia,
+    ]
+
     // Add user message to chat
     const userMessage: ChatMessage = {
       role: 'user',
-      content: message,
+      content: mssageContent,
       timestamp: new Date().toISOString(),
     }
     setChatHistory((prev) => [...prev, userMessage])
@@ -149,29 +181,30 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
   }
 
   const handleUploadFiles = async (files: File[]) => {
-    try {
-      toast.info('Uploading files...')
+    setPendingUploadedFiles((prev) => [...prev, ...files])
+
+    // TODO: delete soon
+    // try {
+      // toast.info('Uploading files...')
       // We need userId for upload - will get it from auth context
       // For now, use a placeholder
-      const uploaded = await uploadMultipleFiles(files, user?.id || '', sessionId)
-      setUploadedFiles((prev) => [...prev, ...uploaded])
-      toast.success(`${uploaded.length} file(s) uploaded successfully`)
+      // Add image blob to message chat AI
+      // const uploaded = await uploadMultipleFiles(files, user?.id || '', sessionId)
+
+
+      // toast.success(`${uploaded.length} file(s) uploaded successfully`)
       
-      // Add message about uploaded files
 
-      // add analyze files to current message
-
-
-      const fileNames = uploaded.map((f) => f.name).join(', ')
-      const message: ChatMessage = {
-        role: 'user',
-        content: `Uploaded additional files: ${fileNames}`,
-        timestamp: new Date().toISOString(),
-      }
-      setChatHistory((prev) => [...prev, message])
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to upload files')
-    }
+      // const fileNames = uploaded.map((f) => f.name).join(', ')
+      // const message: ChatMessage = {
+      //   role: 'user',
+      //   content: `Uploaded additional files: ${fileNames}`,
+      //   timestamp: new Date().toISOString(),
+      // }
+      // setChatHistory((prev) => [...prev, message])
+    // } catch (error: any) {
+    //   toast.error(error.message || 'Failed to upload files')
+    // }
   }
 
   const handleSave = async () => {
@@ -195,6 +228,29 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
     } catch (error: any) {
       console.error('Error saving budget:', error)
       toast.error('Failed to save budget')
+    }
+  }
+
+  const handleOnEdit = async () => {
+    if (!sessionId) {
+      toast.error('No session found')
+      return
+    }
+
+    try {
+      await updateSessionMutation.mutateAsync({
+        sessionId,
+        budget,
+        chatHistory,
+        uploadedFiles,
+        status: 'on-edit'
+      })
+      
+      setCurrentStatus('on-edit')
+      setHasEdited(true)
+    } catch (error: any) {
+      console.error('Error updating budget status:', error)
+      toast.error('Failed to update budget status')
     }
   }
 

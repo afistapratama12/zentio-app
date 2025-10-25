@@ -103,10 +103,25 @@ export function BudgetInputForm({ onGenerate }: BudgetInputFormProps) {
       // Step 2: Generate budget with AI streaming
       setProcessingStep('Generating budget with AI...')
 
+      const messageMedia = Array<{ type: 'image_url'; image_url: { url: string, filename?: string, type?: string } }>()
+      for (const file of uploadedFiles) {
+        messageMedia.push({
+          type: 'image_url',
+          image_url: {
+            url: file.url,
+            filename: file.name,
+            type: file.type,
+          },
+        })
+      }
+
       const chatHistory: ChatMessage[] = [
         {
           role: 'system',
-          content: 'Budget generation started',
+          content: [
+            { type: 'text', text: 'Budget generation started'},
+            ...messageMedia
+          ],
           timestamp: new Date().toISOString(),
         }
       ]

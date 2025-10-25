@@ -20,7 +20,7 @@ export interface BudgetItem {
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system'
-  content: string
+  content: string | Array<Record<string, any>>
   timestamp: string
 }
 
@@ -552,7 +552,7 @@ function detectChanges(original: BudgetItem[], edited: BudgetItem[]): string {
  * Chat with AI about budget - supports streaming
  */
 export async function chatWithAI(
-  messages: ChatMessage[],
+  messagesToSend: ChatMessage[],
   currentBudget: BudgetItem[],
   firstPrompt: ChatMessage | null,
   onChunk?: (chunk: string) => void
@@ -641,7 +641,7 @@ ${budgetContext !== '' ? budgetContext : 'No budget data available.'}`
         role: 'user' as const,
         content: firstPrompt.content
       }] : []),
-      ...messages.map(msg => ({
+      ...messagesToSend.map(msg => ({
         role: msg.role,
         content: msg.content
       }))
