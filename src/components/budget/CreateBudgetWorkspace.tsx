@@ -26,6 +26,7 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([])
   const [firstPrompt, setFirstPrompt] = useState<ChatMessage | null>(null)
   const [budget, setBudget] = useState<BudgetItem[]>([])
+  const [budgetChange, setBudgetChange] = useState<BudgetItem[] | null>(null)
   const [hasEdited, setHasEdited] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [pendingUploadedFiles, setPendingUploadedFiles] = useState<File[]>([])
@@ -33,9 +34,9 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
   const [sessionId, setSessionId] = useState<string>(existingSessionId || '')
   const [currentStatus, setCurrentStatus] = useState<'draft' | 'saved' | 'exported' | 'on-edit'>('draft')
   const [isStreaming, setIsStreaming] = useState(false)
-  const [previousBudget, setPreviousBudget] = useState<BudgetItem[]>([]) // Backup budget before AI changes
   const [hasPendingBudgetChange, setHasPendingBudgetChange] = useState(false)
   const [loadingOverlayBudget, setLoadingOverlayBudget] = useState(false)
+  const [hasLoadedSession, setHasLoadedSession] = useState(false) // Flag to prevent re-loading
 
   // Load existing session if sessionId is provided
   const { data: existingSession, isLoading: sessionLoading } = useBudgetSession(existingSessionId || '')
@@ -47,7 +48,8 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
       router.push('/login')
     }
 
-    if (existingSession && existingSessionId) {
+    // Only load session data once when first mounted
+    if (existingSession && existingSessionId && !hasLoadedSession) {
       const aiGeneratedBudget = existingSession.ai_generated_budget
       
       setBudget(aiGeneratedBudget.budget || [])
@@ -58,10 +60,11 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
       setSessionId(existingSession.id)
       setCurrentStatus((existingSession.status as any) || 'draft')
       setShowWorkspace(true)
+      setHasLoadedSession(true) // Mark as loaded
       
       toast.success('Budget session loaded successfully')
     }
-  }, [existingSession, existingSessionId, user, isLoading])
+  }, [existingSession, existingSessionId, user, isLoading, hasLoadedSession])
 
   const handleGenerate = (data: {
     sessionId: string
@@ -79,8 +82,6 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
     setFirstPrompt(data.firstPrompt)
     setShowWorkspace(true)
   }
-
-  console.log("budget:", budget)
 
   const handleSendMessage = async (message: string) => {
     if (!message.trim() || isStreaming) return
@@ -186,9 +187,9 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
           }
 
           if (currentTextResponse.includes('--start-budget')) {
-            setHasPendingBudgetChange((prev) => !prev)
+            setHasPendingBudgetChange(true)
             setLoadingOverlayBudget(true)
-            setPreviousBudget(() => [...budget]) // Backup current budget
+            // setPreviousBudget(() => [...budget]) // Backup current budget
             changeBudgetOn = true
             currentTextResponse = ''
           }
@@ -214,23 +215,6 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
           })
         }
       )
-
-      // set new budget if changed
-      // parsing object in fullResponse string in the middle of --start-budget-change-- and --end-budget-change--
-      const budgetChangeMatch = fullResponse.match(/--start-budget-change--([\s\S]*?)--end-budget-change--/)
-      if (budgetChangeMatch) {
-        const budgetJsonString = budgetChangeMatch[1].trim()
-        console.log("matched budget change json:", budgetChangeMatch[1])
-        try {
-          const newBudget: BudgetItem[] = JSON.parse(sanitizeAIJson(budgetJsonString))
-          setBudget(newBudget)
-        } catch (error) {
-          console.error('Error parsing budget change JSON:', error)
-          toast.error('Failed to parse budget changes from AI response')
-        }
-      }
-      
-      setLoadingOverlayBudget(false)
       
       // Save updated chat history to session
       if (sessionId) {
@@ -247,6 +231,25 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
           ],
         })
       }
+
+      // set new budget if changed
+      // parsing object in fullResponse string in the middle of --start-budget-change-- and --end-budget-change--
+      const budgetChangeMatch = fullResponse.match(/--start-budget-change--([\s\S]*?)--end-budget-change--/)
+      if (budgetChangeMatch) {
+        const budgetJsonString = budgetChangeMatch[1].trim()
+        // console.log("matched budget change json:", budgetChangeMatch[1])
+        try {
+          const newBudget: BudgetItem[] = JSON.parse(sanitizeAIJson(budgetJsonString))
+          // setBudget(newBudget)
+          setBudgetChange(newBudget)
+        } catch (error) {
+          console.error('Error parsing budget change JSON:', error)
+          toast.error('Failed to parse budget changes from AI response')
+        }
+      }
+      
+      setLoadingOverlayBudget(false)
+
     } catch (error: any) {
       console.error('Error in chat:', error)
       
@@ -275,7 +278,6 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
       toast.error('No session found')
       return
     }
-
     try {
       await updateSessionMutation.mutateAsync({
         sessionId,
@@ -300,11 +302,16 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
       return
     }
 
+    if (!budgetChange) {
+      toast.info('No budget changes to apply')
+      return
+    }
+
     try {
       // Save the new budget to database
       await updateSessionMutation.mutateAsync({
         sessionId,
-        budget,
+        budget: budgetChange,
         chatHistory,
         uploadedFiles,
         status: 'saved',
@@ -312,8 +319,9 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
       
       setCurrentStatus('saved')
       setHasPendingBudgetChange(false)
+      setBudgetChange(null)
       setHasEdited(false)
-      setPreviousBudget([]) // Clear backup
+      // setPreviousBudget([]) // Clear backup
       toast.success('Budget berhasil disimpan!')
     } catch (error: any) {
       console.error('Error applying budget change:', error)
@@ -323,9 +331,10 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
 
   const handleRejectBudgetChange = () => {
     // Restore previous budget
-    setBudget([...previousBudget])
+    // setBudget([...previousBudget])
+    setBudgetChange(null)
     setHasPendingBudgetChange(false)
-    setPreviousBudget([])
+    // setPreviousBudget([])
     toast.info('Perubahan budget dibatalkan')
   }
 
@@ -523,6 +532,7 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
           <div className="lg:col-span-2">
             <BudgetTableSection
               budget={budget}
+              budgetChange={budgetChange}
               estimatedExpense={estimatedExpense}
               hasEdited={hasEdited}
               canRequestFeedback={true}
@@ -561,6 +571,7 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
             <TabsContent value="budget" className="flex-1 mt-4">
               <BudgetTableSection
                 budget={budget}
+                budgetChange={budgetChange}
                 estimatedExpense={estimatedExpense}
                 hasEdited={hasEdited}
                 canRequestFeedback={true}
