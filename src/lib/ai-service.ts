@@ -39,6 +39,7 @@ export interface BudgetGenerationResult {
   explanation: string
   savingsTarget?: number
   insights: string[]
+  firstPrompt: ChatMessage
 }
 
 /**
@@ -223,6 +224,7 @@ export async function generateBudgetStream(
   try {
     // Build prompt
     const prompt = buildBudgetPrompt(params)
+    const timestampPrompt = new Date().toISOString()
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -291,7 +293,14 @@ export async function generateBudgetStream(
 
     // Parse the complete response
     const result = parseBudgetResponse(fullResponse, params.estimatedExpense)
-    onComplete(result)
+    onComplete({
+      ...result,
+      firstPrompt: {
+        role: 'user',
+        content: prompt,
+        timestamp: timestampPrompt
+      }
+    } as BudgetGenerationResult)
 
   } catch (error) {
     console.error('Error generating budget:', error)
@@ -323,23 +332,25 @@ function buildBudgetPrompt(params: BudgetGenerationParams): string {
       interval = `${month}-bulan`
   }
 
-  // Add transaction summary
-  const totalSpent = historyTransactions.reduce((sum, t) => sum + t.amount, 0)
-  const categories = [...new Set(historyTransactions.map(t => t.category))]
+  let prompthistoryTransaction = ''
 
-  const spendingByCategory: Record<string, SpendingByCategory> = {}
-
-  for (const t of historyTransactions) {
-    if (!spendingByCategory[t.category]) {
-      spendingByCategory[t.category] = { items: [], total: 0 }
+  if(historyTransactions.length !== 0) {
+    // Add transaction summary
+    const totalSpent = historyTransactions.reduce((sum, t) => sum + t.amount, 0)
+    const categories = [...new Set(historyTransactions.map(t => t.category))]
+  
+    const spendingByCategory: Record<string, SpendingByCategory> = {}
+  
+    for (const t of historyTransactions) {
+      if (!spendingByCategory[t.category]) {
+        spendingByCategory[t.category] = { items: [], total: 0 }
+      }
+  
+      spendingByCategory[t.category].items.push(t.item)
+      spendingByCategory[t.category].total += t.amount
     }
 
-    spendingByCategory[t.category].items.push(t.item)
-    spendingByCategory[t.category].total += t.amount
-  }
-
-  let prompt = `Saya memiliki data transaksi di periode sebelumnya, sebagai berikut:
- 
+    prompthistoryTransaction = `
 Data transaksi yang sudah dianalisis:
 Total Transaksi: ${historyTransactions.length}
 Total Pengeluaran: Rp ${totalSpent.toLocaleString('id-ID')}
@@ -349,7 +360,11 @@ Dengan rincian sebagai berikut:
 ${spendingByCategory ? Object.entries(spendingByCategory).map(([category, data]) => {
   return `- ${category}:\n  - Items: ${data.items.join(', ')}\n  - Total: Rp ${data.total.toLocaleString('id-ID')}`
 }).join('\n') : ''}
+`
+  }
 
+  const prompt = `Saya memiliki data transaksi di periode sebelumnya, sebagai berikut:
+${prompthistoryTransaction}
 ${inputManual ? "Dan ini ada catatan pengeluaran yang dicatat oleh user: \n" + inputManual : ''}
 
 Berikut juga ada profile user yang bisa digunakan untuk referensi dalam pembuatan budget:
@@ -392,7 +407,7 @@ Pastikan:
   return prompt
 }
 
-function parseBudgetResponse(response: string, estimatedExpense?: number): BudgetGenerationResult {
+function parseBudgetResponse(response: string, estimatedExpense?: number): Record<string, any> {
   try {
     // Log the full response for debugging
     console.log('AI Response:', response)
@@ -539,8 +554,50 @@ function detectChanges(original: BudgetItem[], edited: BudgetItem[]): string {
 export async function chatWithAI(
   messages: ChatMessage[],
   currentBudget: BudgetItem[],
+  firstPrompt: ChatMessage | null,
   onChunk?: (chunk: string) => void
 ): Promise<string> {
+  /**
+   * Buat system prompt yang menjelaskan tugas AI sebagai financial advisor untuk budgeting
+   * - ai ini bisa membantu user untuk mengoptimalkan budgetnya
+   * - ai ini bisa menjawab pertanyaan seputar financial planning
+   * - ai ini bisa mengubah stuktur budget yang ada sesuai permintaan user atau saran dari user
+   * - ai tidak boleh mengubah struktur budget jika user tidak meminta perubahan (kecuali saran optimasi)
+   * - ai juga bisa menjawab hal apapun seputar keuangan apapun termasuk investasi, tabungan, asuransi, dll
+   * - hasil pertanyaan keuangan bisa dijadikan referensi untuk perubahan budget jika diperlukan dari seberapa paham user tentang keuangan
+   * - pastikan ai menjawab dalam bahasa Indonesia yang raman dan mudah dimengerti
+   * 
+   * struktur history chatnya
+    1. first prompt (dari chat system sebelumnya, dan sekarang AI melanjutkan chat dari sini)
+    2. chat history dari param messages
+    3. terahir. input user (bisa nanya, bisa revisi, bisa suggestion ke AI)
+
+    buat state kalau ada perubahan dari stuktur budget, dengan tanda:
+    awalan: --start-budget-change--
+    end: --end-budget-change--
+
+   * format budget change harus sama seperti sebelumnya:
+   * [{ 
+   *    "category": "Nama Kategori",
+   *    "amount": 1000000,
+   *    "percentage": 20.5,
+   *    "notes": "catatan opsional"
+   * }]
+   * 
+   * contoh jawaban:
+   * Baik, saya telah memperbarui budget Anda sesuai permintaan:
+   * --start-budget-change--
+   * [{
+   *    "category": "Makanan",  
+   *   "amount": 1500000,
+   *   "percentage": 25.0,
+   *  "notes": "Mengalokasikan lebih banyak untuk makanan sesuai permintaan."
+   * }]
+   * --end-budget-change--
+   * 
+   * Dari, struktur budget yang baru sudah saya terapkan. Apakah sudah sesuai keinginan Anda?
+   */
+
   try {
     // Build context from current budget
     const budgetContext = currentBudget.length > 0
@@ -551,16 +608,39 @@ export async function chatWithAI(
 
     const systemMessage = {
       role: 'system' as const,
-      content: `You are Zentio AI, an expert financial advisor for Indonesian users. Your role is to:
-- Help users refine and optimize their budget
-- Answer questions about financial planning
-- Provide actionable advice in Indonesian language
-- Be friendly, supportive, and concise
-${budgetContext}`
+      content: `You are Zentio AI, an expert financial advisor for Indonesian users.  
+
+Your role and responsibilities:
+- Help users refine, optimize, and manage their budget.  
+- Answer questions about financial planning in general.  
+- Provide actionable advice on budgeting, investments, savings, insurance, and other financial topics.  
+- Modify the budget structure only if the user explicitly requests changes, or when suggesting clear optimizations.  
+- Always respond in a friendly, supportive, and simple Indonesian language that is easy to understand.  
+
+When making changes to the budget structure:
+- Always mark the changes between:
+  --start-budget-change--
+  [...valid JSON...]
+  --end-budget-change--
+- The JSON format must strictly follow this structure:
+  [{
+    "category": "Category Name",
+    "amount": 1000000,
+    "percentage": 20.5,
+    "notes": "optional notes"
+  }]
+- Never use any other format except valid JSON inside the markers.
+
+Current budget (if available): 
+${budgetContext !== '' ? budgetContext : 'No budget data available.'}`
     }
 
     const apiMessages = [
       systemMessage,
+      ...(firstPrompt ? [{
+        role: 'user' as const,
+        content: firstPrompt.content
+      }] : []),
       ...messages.map(msg => ({
         role: msg.role,
         content: msg.content

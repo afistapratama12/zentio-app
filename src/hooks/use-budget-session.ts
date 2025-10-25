@@ -28,6 +28,7 @@ export interface BudgetSession {
   }
   manual_adjustments?: any
   chat_history: ChatMessage[]
+  first_prompt: ChatMessage
   uploaded_files: UploadedFile[]
   edit_count: number | null
   status: string | null
@@ -44,6 +45,7 @@ interface CreateBudgetSessionParams {
   budget: BudgetItem[]
   explanation: string
   chatHistory: ChatMessage[]
+  firstPrompt: ChatMessage
   uploadedFiles: UploadedFile[]
   insights?: string[]
   savingsTarget?: number
@@ -81,6 +83,7 @@ export function useCreateBudgetSession() {
           insights: params.insights || [],
         } as any,
         chat_history: params.chatHistory as any,
+        first_prompt: params.firstPrompt as any,
         uploaded_files: params.uploadedFiles as any,
         edit_count: 0,
         status: 'draft',

@@ -18,6 +18,7 @@ interface BudgetInputFormProps {
     sessionId: string
     files: UploadedFile[]
     chatHistory: ChatMessage[]
+    firstPrompt: ChatMessage
     budget: BudgetItem[]
     estimatedExpense?: number
   }) => void
@@ -77,11 +78,13 @@ export function BudgetInputForm({ onGenerate }: BudgetInputFormProps) {
 
     try {
       const sessionId = crypto.randomUUID()
+      let uploadedFiles: UploadedFile[] = []
+      let extractedTransactions: Transaction[] = []
 
       // Step 1: Upload files
       if (files.length > 0) {
         setProcessingStep('Uploading files...')
-        const uploadedFiles = await uploadMultipleFiles(
+        uploadedFiles = await uploadMultipleFiles(
           files,
           user.id,
           sessionId,
@@ -90,191 +93,85 @@ export function BudgetInputForm({ onGenerate }: BudgetInputFormProps) {
           }
         )
 
-        // Step 2: Analyze files
+        // Step 1.A: Analyze files
         setProcessingStep('Analyzing files with AI...')
-        const extractedTransactions = await analyzeFiles(uploadedFiles, (message) => {
+        extractedTransactions = await analyzeFiles(uploadedFiles, (message) => {
           setProcessingStep(message)
         })
-
-        // [DEPRECATED] Step 3: Parse manual transactions
-        // let manualTrans: Transaction[] = []
-        // if (manualTransactions.trim()) {
-        //   setProcessingStep('Processing manual transactions...')
-        //   const lines = manualTransactions.trim().split('\n')
-        //   manualTrans = lines.map(line => {
-        //     const parts = line.split(',').map(p => p.trim())
-        //     return {
-        //       item: parts[0] || 'Unknown',
-        //       amount: parseFloat(parts[1]) || 0,
-        //       category: parts[2] || 'Uncategorized',
-        //       date: parts[3] || new Date().toISOString().split('T')[0],
-        //     }
-        //   })
-        // }
-
-        // Combine all transactions
-        // const allTransactions = [...extractedTransactions]
-
-        // if (extractedTransactions.length === 0) {
-        //   toast.error('No transactions found. Please check your data.')
-        //   setIsProcessing(false)
-        //   return
-        // }
-
-        // Step 3: Generate budget with AI streaming
-        setProcessingStep('Generating budget with AI...')
-        
-        const chatHistory: ChatMessage[] = [
-          {
-            role: 'system',
-            content: 'Budget generation started',
-            timestamp: new Date().toISOString(),
-          }
-        ]
-
-        let generatedBudget: BudgetItem[] = []
-        let explanation = ''
-        let insights: string[] = []
-        let savingsTarget: number | undefined
-
-        await generateBudgetStream(
-          {
-            historyTransactions: extractedTransactions,
-            inputManual: manualTransactions.trim() || undefined,
-            budgetType,
-            startDate,
-            endDate,
-            estimatedExpense: estimatedExpense ? parseFloat(estimatedExpense) : undefined,
-            userProfile: profile
-          },
-          (_chunk) => {
-            // Streaming chunk received (not displayed in UI)
-          },
-          (result) => {
-            generatedBudget = result.budget
-            explanation = result.explanation
-            insights = result.insights || []
-            savingsTarget = result.savingsTarget
-
-            chatHistory.push({
-              role: 'assistant',
-              content: explanation + '\n\n' + insights.join('\n'),
-              timestamp: new Date().toISOString(),
-            })
-          }
-        )
-
-        // Step 5: Save to database
-        setProcessingStep('Saving budget session...')
-        const session = await createSessionMutation.mutateAsync({
-          userId: user.id,
-          budgetType,
-          startDate,
-          endDate,
-          estimatedExpense: estimatedExpense ? parseFloat(estimatedExpense) : undefined,
-          budget: generatedBudget,
-          explanation,
-          chatHistory,
-          uploadedFiles,
-          insights,
-          savingsTarget,
-        })
-
-        toast.success('Budget generated successfully!')
-
-        // Navigate to workspace
-        onGenerate({
-          sessionId: session.id,
-          files: uploadedFiles,
-          chatHistory,
-          budget: generatedBudget,
-          estimatedExpense: estimatedExpense ? parseFloat(estimatedExpense) : undefined,
-        })
-
-      } else {
-        // Only manual transactions
-        setProcessingStep('Processing manual transactions...')
-        // const lines = manualTransactions.trim().split('\n')
-        // const transactions: Transaction[] = lines.map(line => {
-        //   const parts = line.split(',').map(p => p.trim())
-        //   return {
-        //     item: parts[0] || 'Unknown',
-        //     amount: parseFloat(parts[1]) || 0,
-        //     category: parts[2] || 'Uncategorized',
-        //     date: parts[3] || new Date().toISOString().split('T')[0],
-        //   }
-        // })
-
-        // Generate budget
-        setProcessingStep('Generating budget with AI...')
-        
-        const chatHistory: ChatMessage[] = [
-          {
-            role: 'system',
-            content: 'Budget generation started',
-            timestamp: new Date().toISOString(),
-          }
-        ]
-
-        let generatedBudget: BudgetItem[] = []
-        let explanation = ''
-        let insights: string[] = []
-        let savingsTarget: number | undefined
-
-        await generateBudgetStream(
-          {
-            historyTransactions: [],
-            inputManual: manualTransactions.trim(),
-            budgetType,
-            startDate,
-            endDate,
-            estimatedExpense: estimatedExpense ? parseFloat(estimatedExpense) : undefined,
-            userProfile: profile
-          },
-          (_chunk) => {
-            // Streaming chunk received (not displayed in UI)
-          },
-          (result) => {
-            generatedBudget = result.budget
-            explanation = result.explanation
-            insights = result.insights || []
-            savingsTarget = result.savingsTarget
-
-            chatHistory.push({
-              role: 'assistant',
-              content: explanation + '\n\n' + insights.join('\n'),
-              timestamp: new Date().toISOString(),
-            })
-          }
-        )
-
-        // Save to database
-        setProcessingStep('Saving budget session...')
-        const session = await createSessionMutation.mutateAsync({
-          userId: user.id,
-          budgetType,
-          startDate,
-          endDate,
-          estimatedExpense: estimatedExpense ? parseFloat(estimatedExpense) : undefined,
-          budget: generatedBudget,
-          explanation,
-          chatHistory,
-          uploadedFiles: [],
-          insights,
-          savingsTarget,
-        })
-
-        toast.success('Budget generated successfully!')
-
-        // Navigate to workspace
-        onGenerate({
-          sessionId: session.id,
-          files: [],
-          chatHistory,
-          budget: generatedBudget,
-          estimatedExpense: estimatedExpense ? parseFloat(estimatedExpense) : undefined,
-        })
       }
+
+      // Step 2: Generate budget with AI streaming
+      setProcessingStep('Generating budget with AI...')
+
+      const chatHistory: ChatMessage[] = [
+        {
+          role: 'system',
+          content: 'Budget generation started',
+          timestamp: new Date().toISOString(),
+        }
+      ]
+
+      let generatedBudget: BudgetItem[] = []
+      let explanation = ''
+      let insights: string[] = []
+      let savingsTarget: number | undefined
+      let firstPrompt: ChatMessage = {} as ChatMessage
+
+      await generateBudgetStream(
+        {
+          historyTransactions: extractedTransactions,
+          inputManual: manualTransactions.trim() || undefined,
+          budgetType,
+          startDate,
+          endDate,
+          estimatedExpense: estimatedExpense ? parseFloat(estimatedExpense) : undefined,
+          userProfile: profile
+        },
+        (_chunk) => {
+          // Streaming chunk received (not displayed in UI)
+        },
+        (result) => {
+          generatedBudget = result.budget
+          explanation = result.explanation
+          insights = result.insights || []
+          savingsTarget = result.savingsTarget
+          firstPrompt = result.firstPrompt
+
+          chatHistory.push({
+            role: 'assistant',
+            content: explanation + '\n\n' + insights.join('\n'),
+            timestamp: new Date().toISOString(),
+          })
+        }
+      )
+      // Step 3: Save to database
+      setProcessingStep('Saving budget session...')
+      const session = await createSessionMutation.mutateAsync({
+        userId: user.id,
+        budgetType,
+        startDate,
+        endDate,
+        firstPrompt,
+        estimatedExpense: estimatedExpense ? parseFloat(estimatedExpense) : undefined,
+        budget: generatedBudget,
+        explanation,
+        chatHistory,
+        uploadedFiles,
+        insights,
+        savingsTarget,
+      })
+
+      toast.success('Budget generated successfully!')
+
+      // Navigate to workspace
+      onGenerate({
+        sessionId: session.id,
+        files: uploadedFiles,
+        chatHistory,
+        firstPrompt,
+        budget: generatedBudget,
+        estimatedExpense: estimatedExpense ? parseFloat(estimatedExpense) : undefined,
+      })
 
     } catch (error: any) {
       console.error('Error generating budget:', error)

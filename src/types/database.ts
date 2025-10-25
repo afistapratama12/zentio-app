@@ -19,6 +19,7 @@ export type Database = {
           ai_generated_budget: Json
           budget_type: string | null
           chat_history: Json | null
+          first_prompt: Json | null
           created_at: string
           edit_count: number | null
           end_date: string | null
@@ -36,6 +37,7 @@ export type Database = {
           ai_generated_budget: Json
           budget_type?: string | null
           chat_history?: Json | null
+          first_prompt?: Json | null
           created_at?: string
           edit_count?: number | null
           end_date?: string | null
@@ -53,6 +55,7 @@ export type Database = {
           ai_generated_budget?: Json
           budget_type?: string | null
           chat_history?: Json | null
+          first_prompt?: Json | null
           created_at?: string
           edit_count?: number | null
           end_date?: string | null

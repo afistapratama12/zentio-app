@@ -208,17 +208,17 @@ export function BudgetTableSection({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[30%]">Category</TableHead>
-                <TableHead className="w-[25%]">Amount</TableHead>
+                <TableHead className="w-[25%]">Category</TableHead>
+                <TableHead className="w-[20%]">Amount</TableHead>
                 <TableHead className="w-[15%]">Percentage</TableHead>
-                <TableHead className="w-[25%]">Notes</TableHead>
+                <TableHead className="w-[35%]">Notes</TableHead>
                 {!readOnly && <TableHead className="w-[5%]"></TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {budget.map((item) => (
                 <TableRow key={item.category}>
-                  <TableCell>
+                  <TableCell className="align-top">
                     {editingId === item.category ? (
                       <Input
                         value={item.category}
@@ -233,7 +233,7 @@ export function BudgetTableSection({
                       <div
                         onClick={() => handleCellEdit(item.category)}
                         className={cn(
-                          'py-1 px-2 rounded',
+                          'py-1 px-2 rounded whitespace-normal break-words',
                           !readOnly && 'cursor-pointer hover:bg-gray-100'
                         )}
                       >
@@ -269,7 +269,7 @@ export function BudgetTableSection({
                       {formatPercentage(item.percentage)}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="align-top">
                     {editingId === item.category ? (
                       <Input
                         value={item.notes || ''}
@@ -281,7 +281,7 @@ export function BudgetTableSection({
                       <div
                         onClick={() => handleCellEdit(item.category)}
                         className={cn(
-                          'py-1 px-2 rounded text-sm text-gray-600',
+                          'py-1 px-2 rounded text-sm text-gray-600 whitespace-normal break-words',
                           !readOnly && 'cursor-pointer hover:bg-gray-100'
                         )}
                       >
@@ -314,7 +314,7 @@ export function BudgetTableSection({
                 size="sm"
                 onClick={handleAddRow}
                 disabled={isProcessing}
-                className="w-full border-dashed"
+                className="w-full border-dashed hover:cursor-pointer"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Budget Item

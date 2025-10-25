@@ -2,7 +2,7 @@
 
 // import { Link, useLocation, useRouter } from '@tanstack/react-router'
 // import { useLocation } from "next/Navigation"
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   LayoutDashboard,
   History,
@@ -22,9 +22,10 @@ import Link from 'next/link'
 interface AppLayoutProps {
   children: React.ReactNode
   hideLayout?: boolean
+  defaultSidebarCollapse?: boolean
 }
 
-export default function AppLayout({ children, hideLayout = false }: AppLayoutProps) {
+export default function AppLayout({ children, hideLayout = false, defaultSidebarCollapse = false }: AppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const pathname = usePathname()
@@ -38,6 +39,10 @@ export default function AppLayout({ children, hideLayout = false }: AppLayoutPro
       }
     })
   }
+
+  useEffect(() => {
+    setSidebarCollapsed(defaultSidebarCollapse)
+  }, [defaultSidebarCollapse])
 
   if (hideLayout) {
     return <>{children}</>
@@ -95,7 +100,7 @@ export default function AppLayout({ children, hideLayout = false }: AppLayoutPro
       {/* Sidebar Desktop */}
       <aside
         className={`fixed top-16 left-0 bottom-0 z-30 bg-white border-r border-gray-200 transition-all duration-300 hidden lg:block ${
-          sidebarCollapsed ? 'w-20' : 'w-64'
+          sidebarCollapsed ? 'w-16' : 'w-64'
         }`}
       >
         <div className="flex flex-col h-full">
@@ -112,7 +117,9 @@ export default function AppLayout({ children, hideLayout = false }: AppLayoutPro
           </button>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2">
+          <nav className={`flex-1 space-y-2 ${
+            sidebarCollapsed ? 'px-2 py-4' : 'px-4 py-4'
+          }`}>
             {navItems.map((item) => {
               const isActive = item.exact
                 ? pathname === item.to
@@ -123,7 +130,7 @@ export default function AppLayout({ children, hideLayout = false }: AppLayoutPro
                 <Link
                   key={item.to}
                   href={item.to}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                  className={`flex items-center gap-3 px-4 py-4 rounded-xl transition-all ${
                     isActive
                       ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-200'
                       : 'text-gray-700 hover:bg-gray-100'
@@ -236,7 +243,7 @@ export default function AppLayout({ children, hideLayout = false }: AppLayoutPro
       {/* Main Content */}
       <main
         className={`pt-16 transition-all duration-300 ${
-          sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'
+          sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'
         }`}
       >
         {children}

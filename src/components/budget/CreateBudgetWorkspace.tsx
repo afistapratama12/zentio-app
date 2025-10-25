@@ -10,14 +10,20 @@ import { type UploadedFile, uploadMultipleFiles } from '../../lib/file-upload'
 import { toast } from 'sonner'
 import { useBudgetSession, useUpdateBudgetSession } from '../../hooks/use-budget-session'
 import { Loader2 } from 'lucide-react'
+import { useAuth } from '@/hooks/use-auth'
+import { useRouter } from 'next/navigation'
 
 interface CreateBudgetWorkspaceProps {
   sessionId?: string
 }
 
 export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBudgetWorkspaceProps = {}) {
+  const router = useRouter()
+
+  const { user, isLoading } = useAuth()
   const [showWorkspace, setShowWorkspace] = useState(false)
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([])
+  const [firstPrompt, setFirstPrompt] = useState<ChatMessage | null>(null)
   const [budget, setBudget] = useState<BudgetItem[]>([])
   const [hasEdited, setHasEdited] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
@@ -32,11 +38,16 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
 
   // Load session data when it's fetched
   useEffect(() => {
+    if (!isLoading && !user) {
+      router.push('/login')
+    }
+
     if (existingSession && existingSessionId) {
       const aiGeneratedBudget = existingSession.ai_generated_budget
       
       setBudget(aiGeneratedBudget.budget || [])
       setChatHistory(existingSession.chat_history || [])
+      setFirstPrompt(existingSession.first_prompt || null)
       setUploadedFiles(existingSession.uploaded_files || [])
       setEstimatedExpense(existingSession.estimated_expense || undefined)
       setSessionId(existingSession.id)
@@ -45,12 +56,13 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
       
       toast.success('Budget session loaded successfully')
     }
-  }, [existingSession, existingSessionId])
+  }, [existingSession, existingSessionId, user, isLoading])
 
   const handleGenerate = (data: {
     sessionId: string
     files: UploadedFile[]
     chatHistory: ChatMessage[]
+    firstPrompt: ChatMessage
     budget: BudgetItem[]
     estimatedExpense?: number
   }) => {
@@ -59,6 +71,7 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
     setChatHistory(data.chatHistory)
     setBudget(data.budget)
     setEstimatedExpense(data.estimatedExpense)
+    setFirstPrompt(data.firstPrompt)
     setShowWorkspace(true)
   }
 
@@ -94,6 +107,7 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
       await chatWithAI(
         messagesToSend,
         budget,
+        firstPrompt,
         (chunk) => {
           fullResponse += chunk
           // Update the AI message in real-time
@@ -139,11 +153,15 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
       toast.info('Uploading files...')
       // We need userId for upload - will get it from auth context
       // For now, use a placeholder
-      const uploaded = await uploadMultipleFiles(files, 'current-user', sessionId)
+      const uploaded = await uploadMultipleFiles(files, user?.id || '', sessionId)
       setUploadedFiles((prev) => [...prev, ...uploaded])
       toast.success(`${uploaded.length} file(s) uploaded successfully`)
       
       // Add message about uploaded files
+
+      // add analyze files to current message
+
+
       const fileNames = uploaded.map((f) => f.name).join(', ')
       const message: ChatMessage = {
         role: 'user',

@@ -9,6 +9,7 @@ ADD COLUMN IF NOT EXISTS uploaded_files JSONB DEFAULT '[]'::jsonb,
 ADD COLUMN IF NOT EXISTS edit_count INTEGER DEFAULT 0,
 ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'draft', -- 'draft', 'saved', 'exported'
 ADD COLUMN IF NOT EXISTS last_ai_feedback TEXT;
+AdD COLUMN IF NOT EXISTS first_prompt JSONB;
 
 -- Add index for better query performance
 CREATE INDEX IF NOT EXISTS idx_budget_history_status ON budget_history(status);
