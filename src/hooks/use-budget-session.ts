@@ -185,7 +185,7 @@ export function useBudgetSession(sessionId: string | null) {
 }
 
 // Get user's draft and saved sessions, on-edit (exclude exported)
-export function useDraftSessions(userId: string) {
+export function useBudgetSessions(userId: string) {
   return useQuery({
     queryKey: [...budgetSessionKeys.byUser(userId), 'active'],
     queryFn: async () => {
@@ -193,7 +193,7 @@ export function useDraftSessions(userId: string) {
         .from('budget_history')
         .select('*')
         .eq('user_id', userId)
-        .in('status', ['draft', 'on-edit'])
+        // .in('status', ['draft', 'saved', 'on-edit'])
         .order('created_at', { ascending: false })
 
       if (error) throw error

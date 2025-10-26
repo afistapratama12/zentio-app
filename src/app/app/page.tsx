@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge'
 import { 
   Loader2, TrendingUp, Wallet, Plus, Sparkles, Calendar, FileText, 
   Eye, Trash2, ArrowRight, BarChart3, CheckCircle2, Clock, AlertCircle,
-  Target, Activity, Edit2, ChevronDown
+  Target, Activity, Edit2, ChevronDown,
+  XIcon
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -18,23 +19,37 @@ import {
 import AppLayout from '@/components/AppLayout'
 import { toast } from 'sonner'
 import { useAuth } from '@/hooks/use-auth'
-import { useDraftSessions, useDeleteBudgetSession } from '@/hooks/use-budget-session'
+import { useDeleteBudgetSession, useBudgetSessions } from '@/hooks/use-budget-session'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useUserProfile } from '@/hooks/use-profile'
 
 export default function AppDashboard() {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
-  const { data: budgetSessions = [], isLoading: sessionsLoading } = useDraftSessions(user?.id || '')
+  const { data: budgetSessions = [], isLoading: sessionsLoading } = useBudgetSessions(user?.id || '')
   const deleteSessionMutation = useDeleteBudgetSession()
   
   const [showTrackDropdown, setShowTrackDropdown] = useState(false)
   const [showRealizeDropdown, setShowRealizeDropdown] = useState(false)
 
+  const { data: userProfile, isLoading: userProfileLoading } = useUserProfile(user?.id || '')
+
+  // using local storage to state welcome back
+  // - state 'show' when user after login
+  // - change state to 'hide' remove when user first login / register
+  // - change state to 'hide' when user close it
+
+  const [showQuickActions, setShowQuickActions] = useState(false)
+
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/login')
+    }
+
+    if (!localStorage.getItem('showQuickAction') || localStorage.getItem('showQuickAction') === 'true') {
+      setShowQuickActions(true)
     }
   }, [authLoading, user, router])
 
@@ -52,7 +67,7 @@ export default function AppDashboard() {
     }
   }
 
-  if (authLoading || sessionsLoading) {
+  if (authLoading || sessionsLoading || userProfileLoading) {
     return (
       <AppLayout>
         <div className="min-h-screen flex items-center justify-center">
@@ -60,6 +75,13 @@ export default function AppDashboard() {
         </div>
       </AppLayout>
     )
+  }
+
+
+  const handleHideQuickActions = () => {
+    // Implement hide quick actions logic here
+    setShowQuickActions(false)
+    localStorage.setItem('showQuickAction', 'false')
   }
 
   const formatCurrency = (amount: number) => {
@@ -129,10 +151,16 @@ export default function AppDashboard() {
         <div className="max-w-7xl mx-auto space-y-8">
           
           {/* Hero Section with Quick Actions */}
+          {showQuickActions && (
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 p-8 text-white">
             <div className="relative z-10">
-              <h1 className="text-4xl font-bold mb-2">Welcome back! 👋</h1>
-              <p className="text-emerald-100 mb-8">Manage your financial goals with AI-powered budgeting</p>
+              <div className='flex justify-between items-start'>
+                <div>
+                  <h1 className="text-4xl font-bold mb-2">Welcome, {userProfile?.name || 'user'}! 👋</h1>
+                  <p className="text-emerald-100 mb-8">Manage your financial goals with AI-powered budgeting</p>
+                </div>
+                <XIcon onClick={handleHideQuickActions} className='hover:cursor-pointer' />
+              </div>
               
               {/* Quick Action Cards */}
               <div className="grid md:grid-cols-3 gap-4">
@@ -291,7 +319,7 @@ export default function AppDashboard() {
             {/* Decorative elements */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
             <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/5 rounded-full -ml-48 -mb-48"></div>
-          </div>
+          </div>)}
 
           {/* Stats Overview */}
           <div className="grid md:grid-cols-3 gap-6">
@@ -470,7 +498,7 @@ export default function AppDashboard() {
                                   <Link href={`/app/realize-budget/${session.id}`}>
                                     <Button variant="outline" size="sm" className="w-full border-purple-300 text-purple-700 hover:bg-purple-50">
                                       <Target className="w-4 h-4 mr-1" />
-                                      Realize
+                                      Analyze
                                     </Button>
                                   </Link>
                                 </div>

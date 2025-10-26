@@ -8,8 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Loader2, ArrowLeft, Calendar, TrendingUp } from 'lucide-react'
 import AppLayout from '@/components/AppLayout'
-import TransactionManualForm from '@/components/transactions/TransactionManualForm'
-import TransactionUploadForm from '@/components/transactions/TransactionUploadForm'
+import TransactionInputForm from '@/components/transactions/TransactionInputForm'
 import TransactionList from '@/components/transactions/TransactionList'
 import TransactionSummary from '@/components/transactions/TransactionSummary'
 import { useAuth } from '@/hooks/use-auth'
@@ -200,21 +199,12 @@ export default function TransactionTrackingPage() {
 
             {/* Tab: Input */}
             <TabsContent value="input" className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Upload Form */}
-                <TransactionUploadForm
-                  categories={categories}
-                  onUpload={handleBulkUpload}
-                  isUploading={bulkAddMutation.isPending}
-                />
-
-                {/* Manual Form */}
-                <TransactionManualForm
-                  categories={categories}
-                  onAdd={handleAddTransaction}
-                  isSubmitting={addTransactionMutation.isPending}
-                />
-              </div>
+              <TransactionInputForm
+                categories={categories}
+                onAdd={handleAddTransaction}
+                onBulkAdd={handleBulkUpload}
+                isSubmitting={addTransactionMutation.isPending || bulkAddMutation.isPending}
+              />
             </TabsContent>
 
             {/* Tab: List */}
@@ -260,7 +250,7 @@ export default function TransactionTrackingPage() {
                 <Link href={`/app/realize-budget/${sessionId}`}>
                   <Button className="bg-blue-600 hover:bg-blue-700 text-white">
                     <TrendingUp className="w-4 h-4 mr-2" />
-                    Go to Realization
+                    Go to Finishing
                   </Button>
                 </Link>
               </div>

@@ -105,6 +105,10 @@ You can analyze any image containing purchase or spending information, such as:
 - Handwritten expense notes
 - Online payment receipts (Mandiri, PayPal, Stripe, etc.)
 
+You also can handle budget screenshoot image with category and amount, such as:
+- Budgeting apps (YNAB, Mint, PocketGuard, etc.)
+- Personal finance apps (Spendee, Money Lover, Wallet, etc.)
+
 Your task:
 1. Detect all transaction-related text in the image.
 2. Extract all item names (if any), spending category, and amounts.
