@@ -92,6 +92,7 @@ export default function TransactionInputForm({
       toast.success('✅ Transaction added successfully')
       resetManualForm()
     } catch (error) {
+      console.error('Error adding transaction:', error)
       toast.error('Failed to add transaction')
     }
   }
@@ -186,6 +187,7 @@ export default function TransactionInputForm({
         fileInputRef.current.value = ''
       }
     } catch (error) {
+      console.error('Error saving analyzed transactions:', error)
       toast.error('Failed to save transactions')
     }
   }

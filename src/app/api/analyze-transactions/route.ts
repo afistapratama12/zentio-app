@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     // Get all files from formData (support multiple files)
     const files: File[] = []
-    formData.forEach((value, key) => {
+    formData.forEach((value) => {
       if (value instanceof File) {
         files.push(value)
       }
@@ -180,8 +180,6 @@ Rules:
       },
       { status: 200 }
     )
-
-  // @ts-ignore
   } catch (error: any) {
     console.error('Error analyzing transactions:', error)
     return NextResponse.json(

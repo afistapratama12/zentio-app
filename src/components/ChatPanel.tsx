@@ -234,6 +234,7 @@ Tolong analisis dan buatkan budget rekomendasi!`,
           { role: 'assistant', content: aiResponse },
         ])
       } catch (error) {
+        console.error('Error getting AI response:', error)
         toast.error('Gagal mendapatkan response AI')
       } finally {
         setLoading(false)

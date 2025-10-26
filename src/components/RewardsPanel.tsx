@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 import { Badge as BadgeUI } from './ui/badge'
 import { Progress } from './ui/progress'
@@ -21,11 +21,7 @@ export default function RewardsPanel({ userId }: RewardsPanelProps) {
   })
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    loadRewards()
-  }, [userId])
-
-  async function loadRewards() {
+  const loadRewards = useCallback(async () => {
     try {
       setLoading(true)
       const [badges, progressData] = await Promise.all([
@@ -39,7 +35,11 @@ export default function RewardsPanel({ userId }: RewardsPanelProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [userId])
+
+  useEffect(() => {
+    loadRewards()
+  }, [userId, loadRewards])
 
   function getBadgeProgress(badge: Badge): number {
     switch (badge.criteria) {
@@ -188,7 +188,7 @@ export default function RewardsPanel({ userId }: RewardsPanelProps) {
               <div className="text-6xl mb-3">🎉</div>
               <h4 className="font-bold text-lg text-gray-900">Congratulations!</h4>
               <p className="text-sm text-gray-600 mt-1">
-                You've earned all available badges!
+                You&apos;ve earned all available badges!
               </p>
             </div>
           )}

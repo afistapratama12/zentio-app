@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
@@ -36,7 +37,7 @@ export default function Header() {
             <Menu size={24} />
           </button>
           <Link href="/" className="ml-4">
-            <img
+            <Image
               src="/logo-horizontal.svg"
               alt="Zentio Logo"
               className="h-8"

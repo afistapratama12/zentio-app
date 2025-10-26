@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Trash2, Edit2, Check, X, Filter } from 'lucide-react'
+import { Trash2, Edit2, Check, X } from 'lucide-react'
 import { BudgetTransaction } from '@/types'
 import { toast } from 'sonner'
 
@@ -60,6 +60,7 @@ export default function TransactionList({
       setEditData({})
       toast.success('Transaction updated')
     } catch (error) {
+      console.error('Error updating transaction:', error)
       toast.error('Failed to update transaction')
     }
   }
@@ -75,6 +76,7 @@ export default function TransactionList({
         await onDelete(id)
         toast.success('Transaction deleted')
       } catch (error) {
+        console.error('Error deleting transaction:', error)
         toast.error('Failed to delete transaction')
       }
     }

@@ -105,7 +105,7 @@ export default function TransactionTrackingPage() {
     })
   }
 
-  if (authLoading || sessionLoading) {
+  if (authLoading || sessionLoading || transactionsLoading) {
     return (
       <AppLayout>
         <div className="min-h-screen flex items-center justify-center">

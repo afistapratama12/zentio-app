@@ -3,8 +3,8 @@ import { supabase } from '@/lib/supabase'
 import { BudgetRealization, BudgetRealizationInsight, RealizationAnalysis } from '@/types'
 import { Tables } from '@/types/database'
 
-type BudgetRealizationRow = Tables<'budget_realization'>
-type BudgetRealizationInsightRow = Tables<'budget_realization_insights'>
+// type BudgetRealizationRow = Tables<'budget_realization'>
+// type BudgetRealizationInsightRow = Tables<'budget_realization_insights'>
 
 // Get realizations for a specific session
 export function useRealizationBySession(sessionId: string | null, enabled: boolean = true) {

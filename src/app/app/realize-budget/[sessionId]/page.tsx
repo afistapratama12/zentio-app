@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Loader2, ArrowLeft, Calendar, TrendingUp, Save, Calculator, Sparkles, Wallet, FileText } from 'lucide-react'
+import { Loader2, ArrowLeft, Calendar, TrendingUp, Save, Calculator, Wallet, FileText } from 'lucide-react'
 import AppLayout from '@/components/AppLayout'
 import RealizationAnalysis from '@/components/RealizationAnalysis'
 import { useAuth } from '@/hooks/use-auth'
@@ -23,7 +23,7 @@ import {
 } from '@/hooks/use-realization'
 import {
   useTransactionsBySession,
-  useTransactionSummary,
+  // useTransactionSummary,
   calculateRealizationFromTransactions,
 } from '@/hooks/use-budget-transactions'
 import { analyzeRealization } from '@/lib/ai-service'
@@ -37,9 +37,9 @@ export default function RealizeBudgetPage() {
 
   const { user, isLoading: authLoading } = useAuth()
   const { data: session, isLoading: sessionLoading } = useBudgetSession(sessionId || null)
-  const { data: existingRealization = [], isLoading: realizationLoading } = useRealizationBySession(sessionId, !!sessionId)
+  const { data: existingRealization = [] } = useRealizationBySession(sessionId, !!sessionId)
   const { data: transactions = [] } = useTransactionsBySession(sessionId, !!sessionId)
-  const { data: transactionSummary } = useTransactionSummary(sessionId, !!sessionId)
+  // const { data: transactionSummary } = useTransactionSummary(sessionId, !!sessionId)
   const { data: savedInsight } = useRealizationInsight(sessionId, !!sessionId)
 
   const saveRealizationMutation = useSaveRealization()
@@ -647,7 +647,7 @@ export default function RealizeBudgetPage() {
                       <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                       <p className="text-sm font-medium">No analysis available</p>
                       <p className="text-xs mt-1 mb-4">
-                        Enter realization data and click "Analyze" to generate insights
+                        Enter realization data and click &quot;Analyze&quot; to generate insights
                       </p>
                       <div className="flex gap-2 justify-center">
                         <Button variant="outline" onClick={() => setActiveTab('quick-input')}>

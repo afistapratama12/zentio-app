@@ -127,6 +127,7 @@ export function useUpdateTransaction() {
         .from('budget_transactions')
         .update(updates)
         .eq('id', transactionId)
+        .eq('session_id', sessionId)
         .select()
         .single()
 
@@ -156,6 +157,7 @@ export function useDeleteTransaction() {
         .from('budget_transactions')
         .delete()
         .eq('id', transactionId)
+        .eq('session_id', sessionId)
 
       if (error) throw error
     },

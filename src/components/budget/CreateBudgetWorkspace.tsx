@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { BudgetInputForm } from '../budget/BudgetInputForm'
 import { ChatSection } from '../budget/ChatSection'
@@ -135,7 +135,7 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
     setChatHistory((prev) => [...prev, userMessage])
 
     // Create placeholder for AI response
-    const aiMessageId = Date.now().toString()
+    // const aiMessageId = Date.now().toString()
     const aiMessage: ChatMessage = {
       role: 'assistant',
       content: '',
@@ -156,9 +156,9 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
       let afterChangeBudget = false
       let hasDoneCleanFirstPart = false
 
-      let firstParts: {type: 'text', content: string} = {type: 'text', content: '' }
-      let secondParts: {type: 'budget-change', content: string} = {type: 'budget-change', content: '' }
-      let thirdParts: {type: 'text', content: string} = {type: 'text', content: '' }
+      const firstParts: {type: 'text', content: string} = {type: 'text', content: '' }
+      const secondParts: {type: 'budget-change', content: string} = {type: 'budget-change', content: '' }
+      const thirdParts: {type: 'text', content: string} = {type: 'text', content: '' }
 
       // Call AI with streaming
       await chatWithAI(
@@ -376,28 +376,28 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
     toast.info('Perubahan budget dibatalkan')
   }
 
-  const handleOnEdit = async () => {
-    if (!sessionId) {
-      toast.error('No session found')
-      return
-    }
+  // const handleOnEdit = async () => {
+  //   if (!sessionId) {
+  //     toast.error('No session found')
+  //     return
+  //   }
 
-    try {
-      await updateSessionMutation.mutateAsync({
-        sessionId,
-        budget,
-        chatHistory,
-        uploadedFiles,
-        status: 'on-edit'
-      })
+  //   try {
+  //     await updateSessionMutation.mutateAsync({
+  //       sessionId,
+  //       budget,
+  //       chatHistory,
+  //       uploadedFiles,
+  //       status: 'on-edit'
+  //     })
       
-      setCurrentStatus('on-edit')
-      // setHasEdited(true)
-    } catch (error: any) {
-      console.error('Error updating budget status:', error)
-      toast.error('Failed to update budget status')
-    }
-  }
+  //     setCurrentStatus('on-edit')
+  //     // setHasEdited(true)
+  //   } catch (error: any) {
+  //     console.error('Error updating budget status:', error)
+  //     toast.error('Failed to update budget status')
+  //   }
+  // }
 
   // Show loading state while fetching existing session
   if (existingSessionId && sessionLoading) {

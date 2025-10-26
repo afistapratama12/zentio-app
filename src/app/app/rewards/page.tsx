@@ -255,7 +255,7 @@ export default function Rewards() {
                   Perfect Score!
                 </h2>
                 <p className="text-xl text-gray-600 mb-6">
-                  You've unlocked all {BADGES.length} badges! You're a budgeting champion! 🏆
+                  You&apos;ve unlocked all {BADGES.length} badges! You&apos;re a budgeting champion! 🏆
                 </p>
                 <div className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-full font-semibold text-lg shadow-lg">
                   <Trophy className="h-6 w-6" />

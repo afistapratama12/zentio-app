@@ -110,7 +110,7 @@ export function ChatSection({
                     AI Budget Assistant
                   </h3>
                   <p className="text-sm">
-                    I'll help you create and optimize your budget plan.
+                    I&apos;ll help you create and optimize your budget plan.
                     <br />
                     Upload your transaction data to get started!
                   </p>

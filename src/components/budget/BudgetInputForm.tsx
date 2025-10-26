@@ -142,7 +142,7 @@ export function BudgetInputForm({ onGenerate }: BudgetInputFormProps) {
           estimatedExpense: estimatedExpense ? parseFloat(estimatedExpense) : undefined,
           userProfile: profile
         },
-        (_chunk) => {
+        () => {
           // Streaming chunk received (not displayed in UI)
         },
         (result) => {
@@ -429,7 +429,7 @@ export function BudgetInputForm({ onGenerate }: BudgetInputFormProps) {
           <div>
             <Label htmlFor="expense">Estimated Maximum Expense (Optional)</Label>
             <p className="text-xs text-gray-500 mt-1 mb-2">
-              AI will ensure total budget doesn't exceed this amount
+              AI will ensure total budget doesn&apos;t exceed this amount
             </p>
             <Input
               id="expense"

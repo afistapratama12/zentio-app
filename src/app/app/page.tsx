@@ -1,12 +1,12 @@
 "use client"
 
 import { useEffect, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { 
-  Loader2, TrendingUp, Wallet, Plus, Sparkles, Calendar, FileText, 
-  Eye, Trash2, ArrowRight, BarChart3, CheckCircle2, Clock, AlertCircle,
+  Loader2, Plus, Sparkles, Calendar, FileText, 
+  Eye, Trash2, ArrowRight, BarChart3, CheckCircle2, Clock,
   Target, Activity, Edit2, ChevronDown,
   XIcon
 } from 'lucide-react'
@@ -139,7 +139,7 @@ export default function AppDashboard() {
   // Helper to format session name
   const formatSessionName = (session: any) => {
     const budgetData = session.ai_generated_budget?.budget || []
-    // @ts-ignore
+    // @ts-expect-error - budgetData type from AI response
     const totalAmount = budgetData.reduce((sum, item) => sum + item.amount, 0)
     const type = session.budget_type === '1-month' ? '1M' : session.budget_type === '1-year' ? '1Y' : 'Custom'
     return `${type} - ${formatCurrency(totalAmount)}`

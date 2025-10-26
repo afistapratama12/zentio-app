@@ -1,6 +1,6 @@
 import { UserProfile } from '@/types'
 import type { UploadedFile } from './file-upload'
-import { parseCSV } from './file-upload'
+// import { parseCSV } from './file-upload'
 
 const OPENAI_API_KEY = process.env.NEXT_PUBLIC_OPENAI_API_KEY
 
@@ -116,103 +116,103 @@ export async function analyzeFiles(
 /**
  * Analyze image using OpenAI Vision API
  */
-async function analyzeImageWithAI(imageUrl: string): Promise<Transaction[]> {
-  try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a financial data extraction assistant. Extract transaction information from receipt or invoice images.'
-          },
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: 'Extract all transactions from this image. Return a JSON array with format: [{"item": "...", "amount": number, "category": "...", "date": "YYYY-MM-DD"}]. If date is not visible, use today\'s date. Categorize items appropriately (Food, Transport, Entertainment, etc.).'
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: imageUrl
-                }
-              }
-            ]
-          }
-        ],
-        max_tokens: 1000,
-        response_format: { type: 'json_object' }
-      }),
-    })
+// async function analyzeImageWithAI(imageUrl: string): Promise<Transaction[]> {
+//   try {
+//     const response = await fetch('https://api.openai.com/v1/chat/completions', {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json',
+//         'Authorization': `Bearer ${OPENAI_API_KEY}`,
+//       },
+//       body: JSON.stringify({
+//         model: 'gpt-4o',
+//         messages: [
+//           {
+//             role: 'system',
+//             content: 'You are a financial data extraction assistant. Extract transaction information from receipt or invoice images.'
+//           },
+//           {
+//             role: 'user',
+//             content: [
+//               {
+//                 type: 'text',
+//                 text: 'Extract all transactions from this image. Return a JSON array with format: [{"item": "...", "amount": number, "category": "...", "date": "YYYY-MM-DD"}]. If date is not visible, use today\'s date. Categorize items appropriately (Food, Transport, Entertainment, etc.).'
+//               },
+//               {
+//                 type: 'image_url',
+//                 image_url: {
+//                   url: imageUrl
+//                 }
+//               }
+//             ]
+//           }
+//         ],
+//         max_tokens: 1000,
+//         response_format: { type: 'json_object' }
+//       }),
+//     })
 
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`)
-    }
+//     if (!response.ok) {
+//       throw new Error(`OpenAI API error: ${response.statusText}`)
+//     }
 
-    const data = await response.json()
-    const content = data.choices[0].message.content
-    const parsed = JSON.parse(content)
+//     const data = await response.json()
+//     const content = data.choices[0].message.content
+//     const parsed = JSON.parse(content)
     
-    return parsed.transactions || []
-  } catch (error) {
-    console.error('Error analyzing image:', error)
-    return []
-  }
-}
+//     return parsed.transactions || []
+//   } catch (error) {
+//     console.error('Error analyzing image:', error)
+//     return []
+//   }
+// }
 
 /**
  * Analyze video by extracting key frames
  */
-async function analyzeVideoWithAI(videoUrl: string): Promise<Transaction[]> {
-  // For now, we'll just analyze the first frame
-  // In production, you might want to extract multiple frames
-  try {
-    // This is a simplified version
-    // In reality, you'd extract frames from video first
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a financial data extraction assistant.'
-          },
-          {
-            role: 'user',
-            content: `Analyze this video URL for transaction data: ${videoUrl}. Return empty array if no transactions found.`
-          }
-        ],
-        max_tokens: 1000,
-        response_format: { type: 'json_object' }
-      }),
-    })
+// async function analyzeVideoWithAI(videoUrl: string): Promise<Transaction[]> {
+//   // For now, we'll just analyze the first frame
+//   // In production, you might want to extract multiple frames
+//   try {
+//     // This is a simplified version
+//     // In reality, you'd extract frames from video first
+//     const response = await fetch('https://api.openai.com/v1/chat/completions', {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json',
+//         'Authorization': `Bearer ${OPENAI_API_KEY}`,
+//       },
+//       body: JSON.stringify({
+//         model: 'gpt-4o',
+//         messages: [
+//           {
+//             role: 'system',
+//             content: 'You are a financial data extraction assistant.'
+//           },
+//           {
+//             role: 'user',
+//             content: `Analyze this video URL for transaction data: ${videoUrl}. Return empty array if no transactions found.`
+//           }
+//         ],
+//         max_tokens: 1000,
+//         response_format: { type: 'json_object' }
+//       }),
+//     })
 
-    if (!response.ok) {
-      return []
-    }
+//     if (!response.ok) {
+//       return []
+//     }
 
-    const data = await response.json()
-    const content = data.choices[0].message.content
-    const parsed = JSON.parse(content)
+//     const data = await response.json()
+//     const content = data.choices[0].message.content
+//     const parsed = JSON.parse(content)
     
-    return parsed.transactions || []
-  } catch (error) {
-    console.error('Error analyzing video:', error)
-    return []
-  }
-}
+//     return parsed.transactions || []
+//   } catch (error) {
+//     console.error('Error analyzing video:', error)
+//     return []
+//   }
+// }
 
 /**
  * Generate budget using OpenAI with streaming
@@ -286,6 +286,7 @@ export async function generateBudgetStream(
               onChunk(content)
             }
           } catch (e) {
+            console.error('Error parsing stream chunk:', e)
             // Skip invalid JSON
           }
         }
@@ -744,6 +745,7 @@ ${budgetContext}`
                 onChunk(content)
               }
             } catch (e) {
+              console.error('Error parsing stream chunk:', e)
               // Skip invalid JSON
             }
           }

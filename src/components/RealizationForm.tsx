@@ -261,7 +261,7 @@ export default function RealizationForm({
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-800">
               <strong>💡 Tip:</strong> Enter your actual income and expenses for each category. 
-              Click "Analyze" to get AI insights on your budgeting performance!
+              Click &quot;Analyze&quot; to get AI insights on your budgeting performance!
             </p>
           </div>
         </div>

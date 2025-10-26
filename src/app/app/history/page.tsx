@@ -11,7 +11,6 @@ import AppLayout from '@/components/AppLayout'
 import { useAuth } from '@/hooks/use-auth'
 import { useBudgetHistory } from '@/hooks/use-budget'
 import { Button } from '@/components/ui/button'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 interface TimelineDataPoint {

@@ -18,6 +18,7 @@ import { Button } from './ui/button'
 import { useLogout } from '../hooks/use-auth'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -71,7 +72,13 @@ export default function AppLayout({ children, hideLayout = false, defaultSidebar
 
             <Link href="/app" className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
-                <img src="/logo.svg" alt="Zentio" className="w-8 h-8" />
+                <Image 
+                  src="/logo.svg" 
+                  alt="Zentio" 
+                  // className="w-8 h-8" 
+                  width={32}
+                  height={32}
+                  />
               </div>
               <div className="hidden sm:block">
                 <h1 className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
@@ -178,7 +185,7 @@ export default function AppLayout({ children, hideLayout = false, defaultSidebar
               <div className="flex items-center justify-between p-4 border-b border-gray-200">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
-                    <img src="/logo.svg" alt="Zentio" className="w-8 h-8" />
+                    <Image src="/logo.svg" alt="Zentio" className="w-8 h-8" />
                   </div>
                   <div>
                     <h1 className="text-lg font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">

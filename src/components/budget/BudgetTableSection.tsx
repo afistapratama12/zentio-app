@@ -1,5 +1,5 @@
 import { v4 } from "uuid";
-import { useCallback, useEffect, useMemo, useState, useRef, ChangeEvent } from "react";
+import { useCallback, useEffect, useState, useRef, ChangeEvent } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -18,7 +18,6 @@ import {
   Download,
   AlertCircle,
   Loader2,
-  Sparkles,
 } from "lucide-react";
 import { type BudgetItem } from "../../lib/ai-service";
 import { toast } from "sonner";
@@ -99,7 +98,7 @@ export function BudgetTableSection({
     onSave(currentBudget);
     // Reset flag after save so next edit can trigger onEdit again
     hasCalledOnEditRef.current = false;
-  }, [onSave]);
+  }, [onSave, currentBudget]);
 
   const totalBudget = currentBudget.reduce((sum, item) => sum + item.amount, 0);
 

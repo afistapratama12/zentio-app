@@ -12,6 +12,7 @@ import { Loader2, Sparkles, Mail, CheckCircle2 } from 'lucide-react'
 import { useLogin, useSignup } from '@/hooks/use-auth'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 export default function Login() {
   // const navigate = useNavigate()
@@ -48,8 +49,6 @@ export default function Login() {
           .single()
 
         if (!profile) {
-          router
-
           router.push('/onboarding')
         } else {
           router.push('/app')
@@ -82,7 +81,7 @@ export default function Login() {
             </div>
             <CardTitle className="text-2xl">Check Your Email</CardTitle>
             <CardDescription>
-              We've sent a verification link to <strong>{email}</strong>
+              We&apos;ve sent a verification link to <strong>{email}</strong>
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -104,13 +103,13 @@ export default function Login() {
                 <li>Open your email inbox</li>
                 <li>Look for email from Zentio</li>
                 <li>Click the verification link</li>
-                <li>You'll be redirected to the app</li>
+                <li>You&apos;ll be redirected to the app</li>
               </ol>
             </div>
 
             <div className="pt-4 border-t space-y-2">
               <p className="text-xs text-gray-500 text-center">
-                Didn't receive the email? Check your spam folder.
+                Didn&apos;t receive the email? Check your spam folder.
               </p>
               <Button
                 onClick={() => setShowEmailSent(false)}
@@ -132,7 +131,7 @@ export default function Login() {
         <div className="text-center mb-8">
           <div className="mb-6 flex justify-center">
             <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-2xl shadow-emerald-200">
-              <img src="/logo.svg" alt="Zentio" className="w-16 h-16" />
+              <Image src="/logo.svg" alt="Zentio" className="w-16 h-16" />
             </div>
           </div>
           <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full text-sm font-medium mb-4">
