@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
-import { Input } from "../ui/input";
+import { Textarea } from "../ui/textarea";
 import {
   Send,
   Bot,
@@ -46,7 +46,9 @@ export function ChatSection({
 }: ChatSectionProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [inputValue, setInputValue] = useState("");
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -55,6 +57,16 @@ export function ChatSection({
   useEffect(() => {
     scrollToBottom();
   }, [messages, streamingMessage]);
+
+  // Auto-resize textarea
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      const newHeight = Math.min(textarea.scrollHeight, 192); // 192px = 8 lines * 24px
+      textarea.style.height = `${newHeight}px`;
+    }
+  }, [inputValue]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
@@ -364,13 +376,9 @@ export function ChatSection({
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  const form = e.currentTarget;
-                  const input = form.elements.namedItem(
-                    "message"
-                  ) as HTMLInputElement;
-                  if (input.value.trim() && !disabled) {
-                    onSendMessage(input.value.trim());
-                    input.value = "";
+                  if (inputValue.trim() && !disabled) {
+                    onSendMessage(inputValue.trim());
+                    setInputValue("");
                     // Upload pending files if any
                     if (pendingFiles.length > 0 && onUploadFiles) {
                       onUploadFiles(pendingFiles);
@@ -378,7 +386,7 @@ export function ChatSection({
                     }
                   }
                 }}
-                className="flex gap-2"
+                className="flex gap-2 items-end"
               >
                 <input
                   type="file"
@@ -398,28 +406,47 @@ export function ChatSection({
                     onClick={() => fileInputRef.current?.click()}
                     disabled={disabled || isStreaming || hasPendingBudgetChange}
                     title="Attach files"
-                    className="hover:cursor-pointer"
+                    className="hover:cursor-pointer flex-shrink-0"
                   >
                     <Paperclip className="w-4 h-4" />
                   </Button>
                 )}
 
-                <Input
-                  name="message"
+                <Textarea
+                  ref={textareaRef}
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    // Submit on Enter (without Shift)
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      if (inputValue.trim() && !disabled && !isStreaming && !hasPendingBudgetChange) {
+                        onSendMessage(inputValue.trim());
+                        setInputValue("");
+                        // Upload pending files if any
+                        if (pendingFiles.length > 0 && onUploadFiles) {
+                          onUploadFiles(pendingFiles);
+                          setPendingFiles([]);
+                        }
+                      }
+                    }
+                    // Allow new line on Shift+Enter (default behavior)
+                  }}
                   placeholder={
                     disabled
                       ? "Please generate budget first..."
-                      : "Ask me anything about your budget..."
+                      : "Ask me anything about your budget... (Shift+Enter for new line)"
                   }
                   disabled={disabled || isStreaming || hasPendingBudgetChange}
-                  className="flex-1"
+                  className="flex-1 resize-none min-h-[44px] max-h-[192px] overflow-y-auto"
+                  rows={1}
                 />
 
                 <Button
                   type="submit"
                   size="icon"
-                  disabled={disabled || isStreaming || hasPendingBudgetChange}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                  disabled={disabled || isStreaming || hasPendingBudgetChange || !inputValue.trim()}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white flex-shrink-0"
                 >
                   {isStreaming ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

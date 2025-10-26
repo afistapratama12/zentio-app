@@ -112,7 +112,7 @@ export default function Home() {
             </p>
             
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-24">
               <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleStart}>
                 Get Started
                 <ArrowRight className="ml-2 w-4 h-4" />
@@ -123,7 +123,7 @@ export default function Home() {
             </div>
             
             {/* Social Proof Stats */}
-            <div className="grid grid-cols-3 gap-8 max-w-3xl mx-auto pt-12 border-t-2 border-emerald-200/50">
+            <div className="grid grid-cols-3 gap-8 max-w-3xl mx-auto pt-12 border-t-2 border-emerald-200/50 mt-12">
               <div className="text-center">
                 <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-2">
                   10K+
