@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { BudgetInputForm } from '../budget/BudgetInputForm'
 import { ChatSection } from '../budget/ChatSection'
-import { BudgetTableSection } from '../budget/BudgetTableSection'
+import { BudgetItemRow, BudgetTableSection } from '../budget/BudgetTableSection'
 import { type ChatMessage, type BudgetItem, chatWithAI } from '../../lib/ai-service'
 import { type UploadedFile, uploadMultipleFiles } from '../../lib/file-upload'
 import { toast } from 'sonner'
@@ -27,44 +27,51 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
   const [firstPrompt, setFirstPrompt] = useState<ChatMessage | null>(null)
   const [budget, setBudget] = useState<BudgetItem[]>([])
   const [budgetChange, setBudgetChange] = useState<BudgetItem[] | null>(null)
-  const [hasEdited, setHasEdited] = useState(false)
+  // const [hasEdited, setHasEdited] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [pendingUploadedFiles, setPendingUploadedFiles] = useState<File[]>([])
   const [estimatedExpense, setEstimatedExpense] = useState<number | undefined>()
   const [sessionId, setSessionId] = useState<string>(existingSessionId || '')
-  const [currentStatus, setCurrentStatus] = useState<'draft' | 'saved' | 'exported' | 'on-edit'>('draft')
+  const [currentStatus, setCurrentStatus] = useState<'draft' | 'saved' | 'on-edit'>('draft')
   const [isStreaming, setIsStreaming] = useState(false)
   const [hasPendingBudgetChange, setHasPendingBudgetChange] = useState(false)
   const [loadingOverlayBudget, setLoadingOverlayBudget] = useState(false)
-  const [hasLoadedSession, setHasLoadedSession] = useState(false) // Flag to prevent re-loading
+  
+  // Use ref to track if session has been loaded (doesn't trigger re-render)
+  const hasLoadedSessionRef = useRef(false)
 
   // Load existing session if sessionId is provided
   const { data: existingSession, isLoading: sessionLoading } = useBudgetSession(existingSessionId || '')
   const updateSessionMutation = useUpdateBudgetSession()
 
-  // Load session data when it's fetched
+  // Redirect if not authenticated - separate effect with minimal dependencies
   useEffect(() => {
     if (!isLoading && !user) {
       router.push('/login')
     }
+  }, [isLoading, user, router])
 
-    // Only load session data once when first mounted
-    if (existingSession && existingSessionId && !hasLoadedSession) {
-      const aiGeneratedBudget = existingSession.ai_generated_budget
-      
-      setBudget(aiGeneratedBudget.budget || [])
-      setChatHistory(existingSession.chat_history || [])
-      setFirstPrompt(existingSession.first_prompt || null)
-      setUploadedFiles(existingSession.uploaded_files || [])
-      setEstimatedExpense(existingSession.estimated_expense || undefined)
-      setSessionId(existingSession.id)
-      setCurrentStatus((existingSession.status as any) || 'draft')
-      setShowWorkspace(true)
-      setHasLoadedSession(true) // Mark as loaded
-      
-      toast.success('Budget session loaded successfully')
+  // Load session data - only runs when existingSession changes and hasn't been loaded yet
+  useEffect(() => {
+    // Guard: only load if we have data, sessionId, and haven't loaded yet
+    if (!existingSession || !existingSessionId || hasLoadedSessionRef.current) {
+      return
     }
-  }, [existingSession, existingSessionId, user, isLoading, hasLoadedSession])
+
+    const aiGeneratedBudget = existingSession.ai_generated_budget
+    
+    setBudget(aiGeneratedBudget.budget || [])
+    setChatHistory(existingSession.chat_history || [])
+    setFirstPrompt(existingSession.first_prompt || null)
+    setUploadedFiles(existingSession.uploaded_files || [])
+    setEstimatedExpense(existingSession.estimated_expense || undefined)
+    setSessionId(existingSession.id)
+    setCurrentStatus((existingSession.status as any) || 'draft')
+    setShowWorkspace(true)
+    hasLoadedSessionRef.current = true // Mark as loaded using ref
+    
+    toast.success('Budget session loaded successfully')
+  }, [existingSession, existingSessionId]) // Minimal dependencies
 
   const handleGenerate = (data: {
     sessionId: string
@@ -82,6 +89,8 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
     setFirstPrompt(data.firstPrompt)
     setShowWorkspace(true)
   }
+
+  console.log('status', currentStatus)
 
   const handleSendMessage = async (message: string) => {
     if (!message.trim() || isStreaming) return
@@ -156,6 +165,7 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
         messagesToSend,
         budget,
         firstPrompt,
+        estimatedExpense,
         (chunk) => {
           fullResponse += chunk
           currentTextResponse += chunk
@@ -273,26 +283,54 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
     setPendingUploadedFiles((prev) => [...prev, ...files])
   }
 
-  const handleSave = async () => {
+  const handleSave = async (currentBudget: BudgetItemRow[]) => {
     if (!sessionId) {
       toast.error('No session found')
       return
     }
+
+    // send AI feedback [SOON]
+
     try {
       await updateSessionMutation.mutateAsync({
         sessionId,
-        budget,
+        budget: currentBudget,
         chatHistory,
         uploadedFiles,
         status: 'saved',
       })
       
       setCurrentStatus('saved')
-      setHasEdited(false)
+      // setHasEdited(false)
       toast.success('Budget saved successfully!')
     } catch (error: any) {
       console.error('Error saving budget:', error)
       toast.error('Failed to save budget')
+    }
+  }
+
+  // current edit state belum tersimpan
+  // hanya chnage status saja
+  const handleEdit = async () => {
+    if (!sessionId) {
+      toast.error('No session found')
+      return
+    }
+
+    try {
+      await updateSessionMutation.mutateAsync({
+        sessionId,
+        budget,
+        chatHistory,
+        uploadedFiles,
+        status: 'on-edit',
+      })
+      
+      setCurrentStatus('on-edit')
+      // setHasEdited(true)
+    } catch (error: any) {
+      console.error('Error updating budget status:', error)
+      toast.error('Failed to update budget status')
     }
   }
 
@@ -320,7 +358,7 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
       setCurrentStatus('saved')
       setHasPendingBudgetChange(false)
       setBudgetChange(null)
-      setHasEdited(false)
+      // setHasEdited(false)
       // setPreviousBudget([]) // Clear backup
       toast.success('Budget berhasil disimpan!')
     } catch (error: any) {
@@ -354,138 +392,10 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
       })
       
       setCurrentStatus('on-edit')
-      setHasEdited(true)
+      // setHasEdited(true)
     } catch (error: any) {
       console.error('Error updating budget status:', error)
       toast.error('Failed to update budget status')
-    }
-  }
-
-  const handleExport = async (format: 'csv' | 'pdf') => {
-    if (!sessionId) {
-      toast.error('No session found')
-      return
-    }
-
-    if (currentStatus !== 'saved') {
-      toast.warning('Please save your budget before exporting', {
-        description: 'Click the Save button first',
-      })
-      return
-    }
-
-    try {
-      // Export logic
-      if (format === 'csv') {
-        exportToCSV(budget)
-      } else {
-        exportToPDF(budget, estimatedExpense)
-      }
-
-      // Update status to exported
-      await updateSessionMutation.mutateAsync({
-        sessionId,
-        status: 'exported',
-      })
-
-      setCurrentStatus('exported')
-      toast.success(`Budget exported as ${format.toUpperCase()}`)
-    } catch (error: any) {
-      console.error('Error exporting budget:', error)
-      toast.error('Failed to export budget')
-    }
-  }
-
-  const exportToCSV = (budgetData: BudgetItem[]) => {
-    const headers = ['Category', 'Amount', 'Percentage', 'Notes']
-    const rows = budgetData.map((item) => [
-      item.category,
-      item.amount.toString(),
-      `${item.percentage.toFixed(1)}%`,
-      item.notes || '',
-    ])
-
-    const csvContent = [
-      headers.join(','),
-      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(',')),
-    ].join('\n')
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    const url = URL.createObjectURL(blob)
-    link.setAttribute('href', url)
-    link.setAttribute('download', `budget_${new Date().toISOString().split('T')[0]}.csv`)
-    link.style.visibility = 'hidden'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
-
-  const exportToPDF = (budgetData: BudgetItem[], estimated?: number) => {
-    // Simple PDF export using HTML to print
-    const total = budgetData.reduce((sum, item) => sum + item.amount, 0)
-    
-    const formatCurrency = (amount: number) => {
-      return new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        minimumFractionDigits: 0,
-      }).format(amount)
-    }
-
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Budget Report</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
-          h1 { color: #059669; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-          th { background-color: #059669; color: white; }
-          .total { font-weight: bold; background-color: #f0fdf4; }
-        </style>
-      </head>
-      <body>
-        <h1>Budget Report</h1>
-        <p>Generated on: ${new Date().toLocaleDateString('id-ID')}</p>
-        ${estimated ? `<p>Estimated Expense: ${formatCurrency(estimated)}</p>` : ''}
-        <table>
-          <thead>
-            <tr>
-              <th>Category</th>
-              <th>Amount</th>
-              <th>Percentage</th>
-              <th>Notes</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${budgetData.map((item) => `
-              <tr>
-                <td>${item.category}</td>
-                <td>${formatCurrency(item.amount)}</td>
-                <td>${item.percentage.toFixed(1)}%</td>
-                <td>${item.notes || '-'}</td>
-              </tr>
-            `).join('')}
-            <tr class="total">
-              <td>Total</td>
-              <td>${formatCurrency(total)}</td>
-              <td>100%</td>
-              <td></td>
-            </tr>
-          </tbody>
-        </table>
-      </body>
-      </html>
-    `
-
-    const printWindow = window.open('', '_blank')
-    if (printWindow) {
-      printWindow.document.write(htmlContent)
-      printWindow.document.close()
-      printWindow.print()
     }
   }
 
@@ -523,7 +433,7 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
               isStreaming={isStreaming}
               onSendMessage={handleSendMessage}
               onUploadFiles={handleUploadFiles}
-              disabled={isStreaming}
+              disabled={isStreaming || currentStatus === 'on-edit'}
               hasPendingBudgetChange={hasPendingBudgetChange}
               onApplyBudgetChange={handleApplyBudgetChange}
               onRejectBudgetChange={handleRejectBudgetChange}
@@ -534,14 +444,15 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
               budget={budget}
               budgetChange={budgetChange}
               estimatedExpense={estimatedExpense}
-              hasEdited={hasEdited}
+              // hasEdited={hasEdited}
               canRequestFeedback={true}
-              onBudgetChange={(newBudget) => {
-                setBudget(newBudget)
-                setHasEdited(true)
-              }}
+              status={currentStatus}
+              // onBudgetChange={(newBudget) => {
+              //   setBudget(newBudget)
+              //   setHasEdited(true)
+              // }}
+              onEdit={handleEdit}
               onSave={handleSave}
-              onExport={handleExport}
               isProcessing={updateSessionMutation.isPending}
               loadingOverlay={loadingOverlayBudget}
             />
@@ -573,14 +484,16 @@ export function CreateBudgetWorkspace({ sessionId: existingSessionId }: CreateBu
                 budget={budget}
                 budgetChange={budgetChange}
                 estimatedExpense={estimatedExpense}
-                hasEdited={hasEdited}
+                // hasEdited={hasEdited}
+                status={currentStatus}
                 canRequestFeedback={true}
-                onBudgetChange={(newBudget) => {
-                  setBudget(newBudget)
-                  setHasEdited(true)
-                }}
+                // onBudgetChange={(newBudget) => {
+                //   setBudget(newBudget)
+                //   setHasEdited(true)
+                // }}
+                onEdit={handleEdit}
                 onSave={handleSave}
-                onExport={handleExport}
+                // onExport={handleExport}
                 isProcessing={updateSessionMutation.isPending}
               />
             </TabsContent>

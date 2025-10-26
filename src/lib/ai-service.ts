@@ -556,6 +556,7 @@ export async function chatWithAI(
   messagesToSend: ChatMessage[],
   currentBudget: BudgetItem[],
   firstPrompt: ChatMessage | null,
+  estimatedExpense?: number,
   onChunk?: (chunk: string) => void
 ): Promise<string> {
   /**
@@ -610,10 +611,13 @@ export async function chatWithAI(
   try {
     // Build context from current budget
     const budgetContext = currentBudget.length > 0
-      ? `\n\nCurrent Budget:\n${currentBudget.map(item => 
-          `- ${item.category}: Rp ${item.amount.toLocaleString('id-ID')} (${item.percentage.toFixed(1)}%)`
-        ).join('\n')}\n\nTotal: Rp ${currentBudget.reduce((sum, item) => sum + item.amount, 0).toLocaleString('id-ID')}`
-      : ''
+      ? `\nCurrent Budget:\n${currentBudget.map(item => 
+          `- ${item.category}: Rp ${item.amount.toLocaleString('id-ID')} (${item.percentage.toFixed(1)}%) (note: ${item.notes || 'N/A'})`
+        ).join('\n')}\n\nTotal: Rp ${currentBudget.reduce((sum, item) => sum + item.amount, 0).toLocaleString('id-ID')}
+        
+        Estimated Expense Limit: ${estimatedExpense ? `Rp ${estimatedExpense.toLocaleString('id-ID')}` 
+      : ''}`
+      : 'No budget data available.'
 
     const systemMessage = {
       role: 'system' as const,
@@ -641,9 +645,8 @@ If there is a request to change the budget or you feel the need to change the bu
 - Never use any other format except valid JSON inside the markers.
 - IMPORTANT: Only send ONE marker with full budget change per response.
 - When sending a budget change, send the COMPLETE budget array (all categories), not just the changed items.
+`
 
-Current budget (if available): 
-${budgetContext !== '' ? budgetContext : 'No budget data available.'}`
     }
 
     // clean up firstPrompt without rule
@@ -681,7 +684,12 @@ ${budgetContext !== '' ? budgetContext : 'No budget data available.'}`
             role: msg.role,
             content: msg.full_content || ''
           }
-        })
+        }),
+      {
+        role: 'system' as const,
+        content: `Current budget plan data (if any) for reference:
+${budgetContext}`
+      }
     ]
 
     if (onChunk) {

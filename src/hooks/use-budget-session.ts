@@ -184,7 +184,7 @@ export function useBudgetSession(sessionId: string | null) {
   })
 }
 
-// Get user's draft and saved sessions (exclude exported)
+// Get user's draft and saved sessions, on-edit (exclude exported)
 export function useDraftSessions(userId: string) {
   return useQuery({
     queryKey: [...budgetSessionKeys.byUser(userId), 'active'],
@@ -193,7 +193,7 @@ export function useDraftSessions(userId: string) {
         .from('budget_history')
         .select('*')
         .eq('user_id', userId)
-        .in('status', ['draft', 'saved'])
+        .in('status', ['draft', 'on-edit'])
         .order('created_at', { ascending: false })
 
       if (error) throw error
@@ -204,23 +204,23 @@ export function useDraftSessions(userId: string) {
 }
 
 // Get user's exported sessions
-export function useExportedSessions(userId: string) {
-  return useQuery({
-    queryKey: [...budgetSessionKeys.byUser(userId), 'exported'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('budget_history')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('status', 'exported')
-        .order('created_at', { ascending: false })
+// export function useExportedSessions(userId: string) {
+//   return useQuery({
+//     queryKey: [...budgetSessionKeys.byUser(userId), 'exported'],
+//     queryFn: async () => {
+//       const { data, error } = await supabase
+//         .from('budget_history')
+//         .select('*')
+//         .eq('user_id', userId)
+//         .eq('status', 'exported')
+//         .order('created_at', { ascending: false })
 
-      if (error) throw error
-      return data as unknown as BudgetSession[]
-    },
-    enabled: !!userId,
-  })
-}
+//       if (error) throw error
+//       return data as unknown as BudgetSession[]
+//     },
+//     enabled: !!userId,
+//   })
+// }
 
 // Delete budget session
 export function useDeleteBudgetSession() {
