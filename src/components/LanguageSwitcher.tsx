@@ -24,7 +24,7 @@ export function LanguageSwitcher() {
           <SelectValue />
         </div>
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className="bg-gradient-to-br from-emerald-50 via-white to-teal-50">
         <SelectItem value="en">
           <span className="font-medium">🇬🇧 {t.dashboard.english}</span>
         </SelectItem>

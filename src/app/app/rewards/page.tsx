@@ -108,12 +108,12 @@ export default function Rewards() {
                 <Target className="h-5 w-5 text-emerald-600" />
                 Overall Progress
               </span>
-              <BadgeUI variant="default" className="text-xl px-4 py-2">
-                {completionPercent}%
+              <BadgeUI variant="default" className="text-lg px-4 py-2">
+                {completionPercent} %
               </BadgeUI>
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-6">
+          <CardContent>
             <div className="mb-4">
               <Progress value={completionPercent} className="h-4" />
             </div>

@@ -779,3 +779,135 @@ ${budgetContext}`
     throw new Error('Gagal berkomunikasi dengan AI. Silakan coba lagi.')
   }
 }
+
+/**
+ * Analyze budget realization and provide insights
+ * Takes realization data + original chat history for context
+ */
+export async function analyzeRealization({
+  realizations,
+  chatHistory,
+  budgetPlan,
+  sessionInfo,
+}: {
+  realizations: Array<{
+    category: string
+    planned_amount: number
+    realized_income: number
+    realized_expense: number
+  }>
+  chatHistory?: ChatMessage[]
+  budgetPlan: BudgetItem[]
+  sessionInfo: {
+    budget_type: string
+    start_date: string
+    end_date: string
+    estimated_expense?: number
+  }
+}): Promise<string> {
+  if (!OPENAI_API_KEY) {
+    throw new Error('OpenAI API key not configured')
+  }
+
+  try {
+    // Calculate statistics
+    const totalPlanned = realizations.reduce((sum, r) => sum + r.planned_amount, 0)
+    const totalIncome = realizations.reduce((sum, r) => sum + r.realized_income, 0)
+    const totalExpense = realizations.reduce((sum, r) => sum + r.realized_expense, 0)
+    const netSavings = totalIncome - totalExpense
+    const savingsPercentage = totalIncome > 0 ? ((netSavings / totalIncome) * 100).toFixed(1) : '0'
+    const expenseRatio = totalIncome > 0 ? ((totalExpense / totalIncome) * 100).toFixed(1) : '0'
+
+    // Build analysis prompt
+    const systemPrompt = `Kamu adalah asisten finansial AI yang ahli dalam menganalisis realisasi budget. 
+Tugasmu adalah memberikan insight mendalam tentang performa budgeting user dan memberikan rekomendasi untuk perencanaan budget selanjutnya.
+
+PENTING: 
+- JANGAN generate budget baru
+- Fokus pada analisis pattern spending
+- Berikan rekomendasi strategis untuk improvement
+- Highlight achievement dan warning
+- Gunakan bahasa Indonesia yang friendly dan insightful`
+
+    const userPrompt = `Saya ingin analisis mendalam tentang realisasi budget saya:
+
+📊 **Informasi Budget Plan:**
+- Periode: ${sessionInfo.budget_type} (${sessionInfo.start_date} s/d ${sessionInfo.end_date})
+- Estimasi Pengeluaran: Rp ${sessionInfo.estimated_expense?.toLocaleString('id-ID') || 'N/A'}
+- Total Budget Plan: Rp ${totalPlanned.toLocaleString('id-ID')}
+
+💰 **Hasil Realisasi:**
+- Total Pemasukan: Rp ${totalIncome.toLocaleString('id-ID')}
+- Total Pengeluaran: Rp ${totalExpense.toLocaleString('id-ID')}
+- Net Savings: Rp ${netSavings.toLocaleString('id-ID')}
+- Savings Rate: ${savingsPercentage}%
+- Expense to Income Ratio: ${expenseRatio}%
+
+📋 **Detail Per Kategori:**
+${realizations.map(r => {
+  const variance = r.realized_expense - r.planned_amount
+  const variancePercent = r.planned_amount > 0 ? ((variance / r.planned_amount) * 100).toFixed(1) : '0'
+  const status = variance > 0 ? '🔴 Over' : variance < 0 ? '🟢 Hemat' : '🟡 Pas'
+  
+  return `- ${r.category}:
+  Plan: Rp ${r.planned_amount.toLocaleString('id-ID')}
+  Income: Rp ${r.realized_income.toLocaleString('id-ID')}
+  Expense: Rp ${r.realized_expense.toLocaleString('id-ID')}
+  Variance: Rp ${variance.toLocaleString('id-ID')} (${variancePercent}%) ${status}`
+}).join('\n\n')}
+
+${chatHistory && chatHistory.length > 0 ? `
+📝 **Context dari Diskusi Budget Planning:**
+${chatHistory.slice(-3).map(msg => {
+  if (msg.role === 'user') return `User: ${typeof msg.content === 'string' ? msg.content : 'File/data uploaded'}`
+  if (msg.role === 'assistant') return `AI: ${typeof msg.content === 'string' ? msg.content.substring(0, 200) : 'Response given'}...`
+  return ''
+}).filter(Boolean).join('\n')}
+` : ''}
+
+Berikan analisis yang mencakup:
+
+1. **Overall Performance:** Apakah saya berhasil hemat atau justru overspend? Bagaimana performa dibanding target?
+
+2. **Category Analysis:** Kategori mana yang paling baik performanya? Mana yang perlu perhatian khusus?
+
+3. **Spending Pattern:** Apa pola pengeluaran yang terlihat? Ada kebiasaan yang perlu diperbaiki?
+
+4. **Achievements:** Highlight pencapaian positif yang perlu dipertahankan
+
+5. **Recommendations:** Rekomendasi spesifik untuk budget planning periode berikutnya (JANGAN generate budget baru, hanya berikan saran strategis)
+
+6. **Action Items:** 3-5 action items konkret yang bisa saya lakukan untuk improve budgeting selanjutnya
+
+Berikan analisis yang insightful, actionable, dan motivating! 🎯`
+
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ]
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-5',
+        messages,
+        max_tokens: 2500,
+        temperature: 0.7,
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    return data.choices[0].message.content
+  } catch (error) {
+    console.error('Error analyzing realization:', error)
+    throw new Error('Gagal menganalisis realisasi budget. Silakan coba lagi.')
+  }
+}

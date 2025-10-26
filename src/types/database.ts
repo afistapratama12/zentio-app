@@ -19,11 +19,11 @@ export type Database = {
           ai_generated_budget: Json
           budget_type: string | null
           chat_history: Json | null
-          first_prompt: Json | null
           created_at: string
           edit_count: number | null
           end_date: string | null
           estimated_expense: number | null
+          first_prompt: Json | null
           id: string
           last_ai_feedback: string | null
           manual_adjustments: Json | null
@@ -37,11 +37,11 @@ export type Database = {
           ai_generated_budget: Json
           budget_type?: string | null
           chat_history?: Json | null
-          first_prompt?: Json | null
           created_at?: string
           edit_count?: number | null
           end_date?: string | null
           estimated_expense?: number | null
+          first_prompt?: Json | null
           id?: string
           last_ai_feedback?: string | null
           manual_adjustments?: Json | null
@@ -55,11 +55,11 @@ export type Database = {
           ai_generated_budget?: Json
           budget_type?: string | null
           chat_history?: Json | null
-          first_prompt?: Json | null
           created_at?: string
           edit_count?: number | null
           end_date?: string | null
           estimated_expense?: number | null
+          first_prompt?: Json | null
           id?: string
           last_ai_feedback?: string | null
           manual_adjustments?: Json | null
@@ -70,6 +70,150 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      budget_realization: {
+        Row: {
+          category: string
+          created_at: string | null
+          id: string
+          notes: string | null
+          planned_amount: number
+          realization_date: string
+          realized_expense: number
+          realized_income: number
+          session_id: string
+          source: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          planned_amount?: number
+          realization_date?: string
+          realized_expense?: number
+          realized_income?: number
+          session_id: string
+          source?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          planned_amount?: number
+          realization_date?: string
+          realized_expense?: number
+          realized_income?: number
+          session_id?: string
+          source?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_realization_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "budget_history"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_realization_insights: {
+        Row: {
+          ai_insight: string
+          analysis_data: Json | null
+          created_at: string | null
+          id: string
+          session_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_insight: string
+          analysis_data?: Json | null
+          created_at?: string | null
+          id?: string
+          session_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_insight?: string
+          analysis_data?: Json | null
+          created_at?: string | null
+          id?: string
+          session_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_realization_insights_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: true
+            referencedRelation: "budget_history"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_transactions: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string | null
+          id: string
+          item: string
+          notes: string | null
+          session_id: string
+          source: string
+          transaction_date: string
+          transaction_type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string | null
+          id?: string
+          item: string
+          notes?: string | null
+          session_id: string
+          source?: string
+          transaction_date: string
+          transaction_type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string | null
+          id?: string
+          item?: string
+          notes?: string | null
+          session_id?: string
+          source?: string
+          transaction_date?: string
+          transaction_type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_transactions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "budget_history"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rewards: {
         Row: {

@@ -395,7 +395,7 @@ export function BudgetInputForm({ onGenerate }: BudgetInputFormProps) {
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-gradient-to-br from-emerald-50 via-white to-teal-50">
                 <SelectItem value="1-month">1 Month Ahead</SelectItem>
                 <SelectItem value="1-year">1 Year Ahead</SelectItem>
                 <SelectItem value="custom">Custom Period</SelectItem>
